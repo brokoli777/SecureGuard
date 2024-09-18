@@ -27,6 +27,7 @@ const ObjectDetection = () => {
     const url = URL.createObjectURL(file);
     setImageURL(url);
     setUseWebcam(false);
+    setDetections([]);
   };
 
   const handleObjectDetection = async () => {
@@ -39,6 +40,8 @@ const ObjectDetection = () => {
   const startWebcam = async () => {
     if (navigator.mediaDevices.getUserMedia) {
       setUseWebcam(true);
+      setImageURL(null);
+      setDetections([]);
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       videoRef.current.srcObject = stream;
     } else {
