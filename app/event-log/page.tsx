@@ -1,5 +1,5 @@
 import Sidebar from '@/components/Sidebar';
-import EventLogOverview from '@/components/EventLogDashboard';
+import EventLogDashboard from '@/components/EventLogDashboard';
 
 export default function EventLogPage() {
   return (
@@ -9,7 +9,7 @@ export default function EventLogPage() {
       
       {/* Main Content */}
       <div className="flex-grow p-6">
-        <EventLogOverview />
+        <EventLogDashboard />
       </div>
     </div>
   );
