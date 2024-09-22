@@ -1,4 +1,4 @@
-import EventTable from './EventTable';
+
 
 export default function EventLogDashboard() {
   return (
@@ -24,23 +24,23 @@ export default function EventLogDashboard() {
           id="filter-date"
           className="p-2 border border-gray-300 rounded"
         />
-        <div className="flex space-x-2">
-          <button className="bg-blue-500 text-white py-2 px-4 rounded">
+          <div className="flex space-x-2">
+          <button className="bg-blue-900 text-white py-1 px-2 rounded text-sm w-32">
             Unrecognized
           </button>
-          <button className="bg-blue-500 text-white py-2 px-4 rounded">
+          <button className="bg-blue-900 text-white py-1 px-2 rounded text-sm w-32">
             Recognized Person
           </button>
-          <button className="bg-blue-500 text-white py-2 px-4 rounded">
+          <button className="bg-blue-900 text-white py-1 px-2 rounded text-sm w-32">
             Weapon
           </button>
-          <button className="bg-blue-500 text-white py-2 px-4 rounded">
+          <button className="bg-blue-900 text-white py-1 px-2 rounded text-sm w-32">
             Fire
           </button>
         </div>
       </div>
 
-      <EventTable />
+
     </div>
   );
 }
