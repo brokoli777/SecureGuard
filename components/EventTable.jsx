@@ -1,31 +1,31 @@
+import { Table, TableHead, TableRow, TableBody, TableCell, TableHeader } from "@/components/ui/table";
+
 export default function EventTable({ data }) {
   return (
-    <table className="w-full border-collapse border border-gray-300">
-      <thead>
-        <tr>
-          <th className="border border-gray-300 p-2">ID</th>
-          <th className="border border-gray-300 p-2">Type</th>
-          <th className="border border-gray-300 p-2">Date</th>
-          <th className="border border-gray-300 p-2">Time</th>
-          <th className="border border-gray-300 p-2">Name/Unrecognized</th>
-          <th className="border border-gray-300 p-2">Alert</th>
-        </tr>
-      </thead>
-      <tbody>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>ID</TableHead>
+          <TableHead>Type</TableHead>
+          <TableHead>Date</TableHead>
+          <TableHead>Time</TableHead>
+          <TableHead>Name/Unrecognized</TableHead>
+          <TableHead>Alert</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {data.map((event) => (
-          <tr key={event.id}>
-            <td className="border border-gray-300 p-2">{event.id}</td>
-            <td className="border border-gray-300 p-2">{event.type}</td>
-            <td className="border border-gray-300 p-2">{event.date}</td>
-            <td className="border border-gray-300 p-2">{event.time}</td>
-            <td className="border border-gray-300 p-2">{event.name}</td>
-            <td className={`border border-gray-300 p-2 ${getAlertStyle(event.alert)}`}>
-              {event.alert}
-            </td>
-          </tr>
+          <TableRow key={event.id}>
+            <TableCell>{event.id}</TableCell>
+            <TableCell>{event.type}</TableCell>
+            <TableCell>{event.date}</TableCell>
+            <TableCell>{event.time}</TableCell>
+            <TableCell>{event.name}</TableCell>
+            <TableCell className={getAlertStyle(event.alert)}>{event.alert}</TableCell>
+          </TableRow>
         ))}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   );
 }
 

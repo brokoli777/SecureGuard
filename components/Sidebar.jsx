@@ -1,17 +1,19 @@
+import { Button } from "@/components/ui/button";
+
 export default function Sidebar() {
   return (
     <div className="w-64 bg-gray-600 border border-gray-300 p-4">
-      <h1 className="text-2xl font-bold mb-8">SecureGuard</h1>
+      <h1 className="text-2xl font-bold text-white mb-8">SecureGuard</h1>
       <ul>
-        <li>
-          <button className="block w-full text-left py-2 px-4 bg-green-900 text-white rounded mb-2">
+        <li className="mb-2">
+          <Button className="w-full text-left bg-green-900 text-white" variant="outline">
             Event Logs
-          </button>
+          </Button>
         </li>
         <li>
-          <button className="block w-full text-left py-2 px-4 bg-green-900 text-white rounded">
+          <Button className="w-full text-left bg-green-900 text-white" variant="outline">
             Members
-          </button>
+          </Button>
         </li>
       </ul>
     </div>
