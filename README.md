@@ -2,7 +2,12 @@
 
 An Image Recognition Security System
 
-## Usage 
+## Features
+
+- Can detect people and objects for security logs.
+- Can recognize registered members and report unrecognized people.
+
+## Setup
 
 Install Libraries
 
