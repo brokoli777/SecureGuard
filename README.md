@@ -28,3 +28,5 @@ Run the application locally
 npm run dev
 ```
 
+The application is also hosted online on vercel.
+
