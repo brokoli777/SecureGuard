@@ -3,6 +3,7 @@ import Link from "next/link";
 import { hasEnvVars } from "@/utils/supabase/check-env-vars";
 import { EnvVarWarning } from "@/components/env-var-warning";
 import HeaderAuth from "@/components/header-auth"; // AuthButton separated
+import { createClient } from "@/utils/supabase/server";
 
 import {
   NavigationMenu,
@@ -15,7 +16,12 @@ import {
   NavigationMenuViewport,
 } from "@/components/ui/navigation-menu"; // Import from your UI components
 
-export default function NavBar() {
+export default async function NavBar() {
+
+  const {
+    data: { user },
+  } = await createClient().auth.getUser();
+
   return (
     <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16 bg-background text-foreground">
       <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
@@ -24,7 +30,6 @@ export default function NavBar() {
         <div className="flex gap-5 items-center font-semibold">
           <Link href="/">Home</Link>
 
-          {/* Company Dropdown */}
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
@@ -55,6 +60,9 @@ export default function NavBar() {
             <NavigationMenuViewport />
           </NavigationMenu>
 
+          {user && (
+
+          <>
           {/* Members Dropdown */}
           <NavigationMenu>
             <NavigationMenuList>
@@ -130,6 +138,10 @@ export default function NavBar() {
             <NavigationMenuIndicator />
             <NavigationMenuViewport />
           </NavigationMenu>
+          
+          </>
+          )}
+
         </div>
 
         {/* Right side: Auth logic or Supabase warning */}
