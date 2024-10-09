@@ -3,12 +3,13 @@
 import { useEffect, useRef, useState } from 'react';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import '@tensorflow/tfjs';
+import Webcam from "react-webcam";
 
 const ObjectDetection = () => {
   const videoRef = useRef(null);
   const [isWebcamStarted, setIsWebcamStarted] = useState(false);
   const [predictions, setPredictions] = useState([]);
-  const [detectionInterval, setDetectionInterval] = useState();
+  // const [detectionInterval, setDetectionInterval] = useState();
 
   const startWebcam = async () => {
     try {
@@ -35,22 +36,61 @@ const ObjectDetection = () => {
     }
   };
 
-  const predictObject = async () => {
+  //Testing option
+
+  const runPrediction = async () => {
     const model = await cocoSsd.load();
+    setInterval(() => {
+      predictObject(model);
+    }, 10);
+  };
+
+
+  const predictObject = async (model) => {
     model.detect(videoRef.current).then((predictions) => {
       setPredictions(predictions);
     }).catch((err) => console.error(err));
   };
 
+
+//Working option
+  const runModel = async () => {
+    const net = await cocoSsd.load();
+    setInterval(() => {
+      detect(net);
+    }, 10);
+  };
+
+  const detect = async (net) => {
+      const video = videoRef.current.video;
+
+      const videoWidth = videoRef.current.video.videoWidth;
+      const videoHeight = videoRef.current.video.videoHeight;
+
+      // Set video width (causes warning if not set)
+      videoRef.current.video.width = videoWidth;
+      videoRef.current.video.height = videoHeight;
+
+      // Make Detections
+        const obj = await net.detect(video);
+        setPredictions(obj);
+      
+  };
+
+
+
   useEffect(() => {
     if (isWebcamStarted) {
-      setDetectionInterval(setInterval(predictObject, 600));
-    } else {
-      if (detectionInterval) {
-        clearInterval(detectionInterval);
-        setDetectionInterval(null);
-      }
-    }
+      // setDetectionInterval(setInterval(predictObject, 600));
+      runModel();
+      //runPrediction();
+    } 
+    // else {
+    //   if (detectionInterval) {
+    //     clearInterval(detectionInterval);
+    //     setDetectionInterval(null);
+    //   }
+    // }
   }, [isWebcamStarted]);
 
   return (
@@ -68,7 +108,13 @@ const ObjectDetection = () => {
       </div>
       <div className="relative">
         {isWebcamStarted ? (
-          <video ref={videoRef} className="w-full h-auto rounded" autoPlay muted />
+           //<video ref={videoRef} className="w-full h-auto rounded" autoPlay muted />
+          <Webcam
+            ref={videoRef}
+            audio={false}
+            videoConstraints={{ facingMode: 'user' }}
+            className="w-full h-auto rounded"
+          />
         ) : (
           <div className="w-full h-auto ">Webcam is off</div>
         )}
