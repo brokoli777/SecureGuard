@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Input } from "@/components/ui/input"; 
-import { Button } from "@/components/ui/button"; 
-import { Textarea } from "@/components/ui/textarea"; 
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function NewMemberForm() {
   const [image, setImage] = useState<string | null>(null);
@@ -24,6 +24,7 @@ export default function NewMemberForm() {
     email: "",
   });
 
+  // Handle input change for all form fields
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -34,10 +35,13 @@ export default function NewMemberForm() {
     }));
   };
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  // Handle input validation on blur for specific fields
+  const handleBlur = (
+    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
 
-    // Mandatory field validation
+    // Validate first and last name
     if (name === "firstName" || name === "lastName") {
       setErrors((prevErrors) => ({
         ...prevErrors,
@@ -45,6 +49,7 @@ export default function NewMemberForm() {
       }));
     }
 
+    // Validate email format
     if (name === "email") {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       setErrors((prevErrors) => ({
@@ -53,15 +58,16 @@ export default function NewMemberForm() {
       }));
     }
 
+    // Validate phone number length
     if (name === "phoneNumber") {
       setErrors((prevErrors) => ({
         ...prevErrors,
-        phoneNumber:
-          value.length === 10 ? "" : "Phone number must be exactly 10 digits",
+        phoneNumber: value.length === 10 ? "" : "Phone number must be exactly 10 digits",
       }));
     }
   };
 
+  // Handle phone number input change (digits only)
   const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
     // Only allow numbers
@@ -73,6 +79,7 @@ export default function NewMemberForm() {
     }
   };
 
+  // Handle image upload
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -80,16 +87,19 @@ export default function NewMemberForm() {
     }
   };
 
+  // Remove the uploaded image
   const handleRemoveImage = () => {
     setImage(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const requiredFields = ["firstName", "lastName", "phoneNumber", "email"];
     let formIsValid = true;
 
+    // Check if required fields are filled
     requiredFields.forEach((field) => {
       if (!formData[field as keyof typeof formData]) {
         setErrors((prevErrors) => ({
@@ -100,8 +110,27 @@ export default function NewMemberForm() {
       }
     });
 
+    // If form is valid, send data to the server
     if (formIsValid && !errors.email && !errors.phoneNumber) {
-      console.log("New member data:", formData);
+      try {
+        const response = await fetch("/api/members", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Member added successfully:", data);
+        } else {
+          const errorData = await response.json();
+          console.error("Error adding member:", errorData);
+        }
+      } catch (error) {
+        console.error("Error adding member:", error);
+      }
     } else {
       console.log("Form contains errors.");
     }
@@ -111,22 +140,22 @@ export default function NewMemberForm() {
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-4">New Member Form</h1>
 
-      {/* Display error messages at the top of the form */}
+      {/* Display error messages */}
       <div className="mb-4">
         {Object.values(errors).some((error) => error) && (
           <div className="text-red-500 text-sm">
             <ul>
-              {Object.keys(errors).map(
-                (field) =>
-                  errors[field as keyof typeof errors] && (
-                    <li key={field}>{errors[field as keyof typeof errors]}</li>
-                  )
+              {Object.keys(errors).map((field) =>
+                errors[field as keyof typeof errors] && (
+                  <li key={field}>{errors[field as keyof typeof errors]}</li>
+                )
               )}
             </ul>
           </div>
         )}
       </div>
 
+      {/* Form for adding a new member */}
       <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-8">
         {/* Left side: Image Upload */}
         <div className="flex flex-col relative">
@@ -137,7 +166,6 @@ export default function NewMemberForm() {
                 alt="Uploaded user"
                 className="w-full h-full object-cover mb-4"
               />
-              {/* Remove button on the image (top-right corner) */}
               <button
                 type="button"
                 onClick={handleRemoveImage}
@@ -154,7 +182,6 @@ export default function NewMemberForm() {
           <label htmlFor="imageUpload" className="text-left">
             Upload User Image
           </label>
-          {/* Custom file input label */}
           <label
             htmlFor="imageUpload"
             className="mt-2 w-36 cursor-pointer bg-blue-500 text-white p-2 text-center rounded"
@@ -180,6 +207,7 @@ export default function NewMemberForm() {
               onChange={handleInputChange}
               onBlur={handleBlur}
               className={`w-2/3 ${errors.firstName ? "border-red-500" : ""}`}
+              required
             />
           </div>
 
@@ -192,6 +220,7 @@ export default function NewMemberForm() {
               onChange={handleInputChange}
               onBlur={handleBlur}
               className={`w-2/3 ${errors.lastName ? "border-red-500" : ""}`}
+              required
             />
           </div>
 
@@ -255,7 +284,7 @@ export default function NewMemberForm() {
 
         {/* Submit Button */}
         <div className="col-span-2 flex justify-end mt-4">
-          <Button type="submit">Add User</Button>
+          <Button type="submit">Add Member</Button>
         </div>
       </form>
     </div>
