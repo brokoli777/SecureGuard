@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation"; // Import the router for redirection
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 export default function NewMemberForm() {
+  const router = useRouter(); // Initialize the router
   const [image, setImage] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     firstName: "",
@@ -124,6 +126,8 @@ export default function NewMemberForm() {
         if (response.ok) {
           const data = await response.json();
           console.log("Member added successfully:", data);
+          // Redirect to the member list page after successful addition
+          router.push("/memberList");
         } else {
           const errorData = await response.json();
           console.error("Error adding member:", errorData);
@@ -134,6 +138,11 @@ export default function NewMemberForm() {
     } else {
       console.log("Form contains errors.");
     }
+  };
+
+  // Handle cancel action
+  const handleCancel = () => {
+    router.push("/memberList"); // Redirect to the member list page
   };
 
   return (
@@ -282,8 +291,11 @@ export default function NewMemberForm() {
           </div>
         </div>
 
-        {/* Submit Button */}
-        <div className="col-span-2 flex justify-end mt-4">
+        {/* Buttons: Add Member and Cancel */}
+        <div className="col-span-2 flex justify-end mt-4 gap-4">
+          <Button variant="outline" onClick={handleCancel}>
+            Cancel
+          </Button>
           <Button type="submit">Add Member</Button>
         </div>
       </form>
