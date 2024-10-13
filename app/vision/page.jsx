@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import * as cocoSsd from "@tensorflow-models/coco-ssd";
 import "@tensorflow/tfjs";
+import * as cocoSsd from "@tensorflow-models/coco-ssd";
 import { createClient } from "@/utils/supabase/client";
+import { detectFaces, drawDetections, handleImageUpload, loadFaceApiModels } from "@/utils/vision/face";
 
 const ObjectDetection = () => {
   const videoRef = useRef(null);
@@ -11,12 +12,16 @@ const ObjectDetection = () => {
   const [predictions, setPredictions] = useState([]);
   const [user, setUser] = useState(null);
 
+  const canvasRef = useRef(null);
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+  const [labeledDescriptors, setLabeledDescriptors] = useState([]);
+
   const supabase = createClient();
   const detectionBuffer = useRef([]);
-  const detectionIntervalId = useRef(null); // Store the interval ID
+  const detectionIntervalId = useRef(null); 
   const lastLoggedTime = useRef(0);
 
-  const detectionIntervalMs = 10; // Adjust detection speed here
+  const detectionIntervalMs = 10; 
   const slowedDetectionIntervalMs = 500;
   const supabasePostReqIntervalMs = 2000;
 
@@ -56,7 +61,6 @@ const ObjectDetection = () => {
     setIsWebcamStarted(false);
     setPredictions([]);
 
-    // Clear the detection interval if it stops running
     if (detectionIntervalId.current) {
       clearInterval(detectionIntervalId.current);
       detectionIntervalId.current = null;
@@ -65,17 +69,33 @@ const ObjectDetection = () => {
 
   const runModel = async () => {
     const net = await cocoSsd.load();
-
-    // Start a detection loop with the specified interval
     detectionIntervalId.current = setInterval(() => {
       detect(net);
     }, detectionIntervalMs);
   };
 
+  useEffect(() => {
+    let animationFrameId;
+    const runDetection = async () => {
+      const result = await detectFaces(videoRef, canvasRef, labeledDescriptors);
+      if (result) {
+        const { results, resizedDetections } = result;
+        drawDetections(canvasRef.current, resizedDetections, results);
+      }
+      animationFrameId = requestAnimationFrame(runDetection);
+    };
+
+    if (modelsLoaded && labeledDescriptors.length > 0) {
+      runDetection();
+    }
+
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [modelsLoaded, labeledDescriptors]);
+
+
   const detect = async (net) => {
     const video = videoRef.current;
 
-    // Check if the video element is ready and webcam is started
     if (!video || video.readyState < 4 || !isWebcamStarted) return;
 
     const videoWidth = video.videoWidth;
@@ -87,6 +107,8 @@ const ObjectDetection = () => {
     // Make object detections
     const obj = await net.detect(video);
     setPredictions(obj);
+
+    console.log("Detected objects:", obj);
 
     const currentTime = Date.now();
     if (currentTime - lastLoggedTime.current >= slowedDetectionIntervalMs) {
@@ -101,6 +123,7 @@ const ObjectDetection = () => {
       lastLoggedTime.current = currentTime;
     }
   };
+
 
   const sendBatchToSupabase = async (batch) => {
     console.log("Sending batch to Supabase:", batch);
@@ -122,21 +145,25 @@ const ObjectDetection = () => {
   };
 
   useEffect(() => {
-    if (isWebcamStarted) {
-      runModel(); // Start the detection process
+    if (isWebcamStarted && modelsLoaded) {
+      runModel(); 
   
       const batchInterval = setInterval(batchProcess, supabasePostReqIntervalMs);
   
-      // Cleanup function only clears intervals, doesn't call stopWebcam()
       return () => {
         clearInterval(batchInterval); // Clear batch processing interval
-        // if (detectionIntervalId.current) {
-        //   clearInterval(detectionIntervalId.current); // Clear detection interval
-        //   detectionIntervalId.current = null;
-        // }
+       
       };
     }
   }, [isWebcamStarted]);
+
+  useEffect(() => {
+    const loadModels = async () => {
+      const success = await loadFaceApiModels();
+      setModelsLoaded(success);
+    };
+    loadModels();
+  }, []);
   
 
   return (
@@ -156,6 +183,7 @@ const ObjectDetection = () => {
 
       <div className="relative">
         {isWebcamStarted ? (
+          <div>
           <video
             ref={videoRef}
             className="w-full h-auto rounded"
@@ -164,6 +192,12 @@ const ObjectDetection = () => {
             width="640"
             height="480"
           />
+          {/* Canvas for face detection */}
+          <canvas
+          ref={canvasRef}
+          className="absolute top-0 left-0 w-full h-full"
+        />
+          </div>
         ) : (
           <div className="w-full h-auto">Webcam is off</div>
         )}
@@ -192,6 +226,20 @@ const ObjectDetection = () => {
               />
             </div>
           ))}
+      </div>
+
+      <h3 className="text-xl font-medium mt-6 text-center">
+        Upload an Image to Add a Person
+      </h3>
+      <div className="flex justify-center mt-4">
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(event) =>
+            handleImageUpload(event, setLabeledDescriptors, modelsLoaded)
+          }
+          className="px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
       </div>
     </div>
   );
