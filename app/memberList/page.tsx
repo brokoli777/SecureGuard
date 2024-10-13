@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -8,37 +9,59 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"; 
-import { Input } from "@/components/ui/input"; 
-import { Button } from "@/components/ui/button"; 
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { createClient } from "@/utils/supabase/client"; // Ensure this is the client-side client
 
-const membersData = [
-  { firstName: "John", lastName: "Doe", email: "john@example.com" },
-  { firstName: "Tom", lastName: "Smith", email: "tom@example.com" },
-  { firstName: "Jon", lastName: "Brown", email: "jon@example.com" },
-  { firstName: "Tomm", lastName: "Lee", email: "tomm@example.com" },
-  { firstName: "Ed", lastName: "White", email: "ed@example.com" },
-  { firstName: "Fred", lastName: "Black", email: "fred@example.com" },
-  { firstName: "Person1", lastName: "Last Name", email: "person1@example.com" },
-  // ... Add more mock data or fetch real data from your backend
-];
+const supabase = createClient();
+
+interface Member {
+  member_id: number; // Change this to use the correct column from your table
+  first_name: string;
+  last_name: string;
+  email: string;
+}
 
 export default function MemberList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [membersPerPage] = useState(10); // Items per page
-  const [filteredMembers, setFilteredMembers] = useState(membersData);
+  const [membersPerPage] = useState(10);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [filteredMembers, setFilteredMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter(); // Initialize router for navigation
+
+  // Fetch members from Supabase
+  useEffect(() => {
+    const fetchMembers = async () => {
+      setLoading(true);
+      setError(null); // Reset error state
+      const { data, error } = await supabase.from("members").select("*");
+
+      if (error) {
+        console.error("Error fetching members:", error);
+        setError("Failed to fetch members.");
+      } else {
+        setMembers(data as Member[]);
+      }
+      setLoading(false);
+    };
+
+    fetchMembers();
+  }, []);
 
   // Handle search filter
   useEffect(() => {
     setFilteredMembers(
-      membersData.filter((member) =>
-        `${member.firstName} ${member.lastName} ${member.email}`
+      members.filter((member) =>
+        `${member.first_name} ${member.last_name} ${member.email}`
           .toLowerCase()
           .includes(searchTerm.toLowerCase())
       )
     );
-  }, [searchTerm]);
+  }, [searchTerm, members]);
 
   // Pagination logic
   const indexOfLastMember = currentPage * membersPerPage;
@@ -50,12 +73,20 @@ export default function MemberList() {
 
   const totalPages = Math.ceil(filteredMembers.length / membersPerPage);
 
+  const handleEditClick = (member_id: number) => {
+    router.push(`/editMember/${member_id}`); // Navigate to the editMember page with the member_id
+  };
+
+  const handleCreateMemberClick = () => {
+    router.push("/newMember"); // Redirect to the new member creation page
+  };
+
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-4">Members</h1>
 
-      {/* Search Bar - aligned at the top left */}
-      <div className="flex justify-start mb-4">
+      {/* Search Bar */}
+      <div className="flex justify-between mb-4">
         <Input
           type="text"
           placeholder="Search"
@@ -63,35 +94,56 @@ export default function MemberList() {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-1/3"
         />
+        <Button variant="default" onClick={handleCreateMemberClick}>
+          Create New Member
+        </Button>
       </div>
 
       {/* Table */}
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>First Name</TableHead>
-            <TableHead>Last Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Edit</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {currentMembers.map((member, index) => (
-            <TableRow key={index}>
-              <TableCell>{member.firstName}</TableCell>
-              <TableCell>{member.lastName}</TableCell>
-              <TableCell>{member.email}</TableCell>
-              <TableCell>
-                <Button variant="outline" size="sm">
-                  ✏️
-                </Button>
-              </TableCell>
+      {loading ? (
+        <p>Loading members...</p>
+      ) : error ? (
+        <p className="text-red-500">{error}</p>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>First Name</TableHead>
+              <TableHead>Last Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Edit</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {currentMembers.length > 0 ? (
+              currentMembers.map((member) => (
+                <TableRow key={member.member_id}>
+                  <TableCell>{member.first_name}</TableCell>
+                  <TableCell>{member.last_name}</TableCell>
+                  <TableCell>{member.email}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditClick(member.member_id)} // Pass member_id for the edit page
+                    >
+                      ✏️
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center">
+                  No members found
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      )}
 
-      {/* Pagination - aligned at the bottom right */}
+      {/* Pagination */}
       <div className="flex justify-end items-center mt-4">
         <Button
           variant="outline"
