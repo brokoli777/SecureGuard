@@ -141,6 +141,8 @@ const FaceRecognition = () => {
           ]);
           setLabeledDescriptors((prev) => [...prev, newDescriptor]);
           console.log("Labeled descriptor added:", name);
+
+          //TODO: Add Descriptor to supabase
         } else {
           alert("Name cannot be empty.");
         }
