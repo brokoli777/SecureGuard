@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   Table,
   TableBody,
@@ -21,6 +22,7 @@ interface Member {
   first_name: string;
   last_name: string;
   email: string;
+  photo_url: string | null;
 }
 
 export default function MemberList() {
@@ -108,6 +110,7 @@ export default function MemberList() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Photo</TableHead>
               <TableHead>First Name</TableHead>
               <TableHead>Last Name</TableHead>
               <TableHead>Email</TableHead>
@@ -118,6 +121,24 @@ export default function MemberList() {
             {currentMembers.length > 0 ? (
               currentMembers.map((member) => (
                 <TableRow key={member.member_id}>
+                  <TableCell>
+                    {member.photo_url ? (
+                      <Image
+                        src={member.photo_url}
+                        alt={`${member.first_name} ${member.last_name}`}
+                        width={64}
+                        height={64}
+                        className="rounded-full"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+                        <span className="text-gray-500 text-lg">
+                          {member.first_name.charAt(0)}
+                          {member.last_name.charAt(0)}
+                        </span>
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell>{member.first_name}</TableCell>
                   <TableCell>{member.last_name}</TableCell>
                   <TableCell>{member.email}</TableCell>
@@ -125,8 +146,7 @@ export default function MemberList() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleEditClick(member.member_id)} // Pass member_id for the edit page
-                    >
+                      onClick={() => handleEditClick(member.member_id)}>
                       ✏️
                     </Button>
                   </TableCell>
@@ -134,7 +154,7 @@ export default function MemberList() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} className="text-center">
+                <TableCell colSpan={5} className="text-center">
                   No members found
                 </TableCell>
               </TableRow>
@@ -148,8 +168,7 @@ export default function MemberList() {
         <Button
           variant="outline"
           onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-        >
+          disabled={currentPage === 1}>
           Prev
         </Button>
         <div className="flex space-x-2 mx-4">
@@ -157,17 +176,17 @@ export default function MemberList() {
             <Button
               key={i}
               variant={currentPage === i + 1 ? "default" : "outline"}
-              onClick={() => setCurrentPage(i + 1)}
-            >
+              onClick={() => setCurrentPage(i + 1)}>
               {i + 1}
             </Button>
           ))}
         </div>
         <Button
           variant="outline"
-          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-          disabled={currentPage === totalPages}
-        >
+          onClick={() =>
+            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+          }
+          disabled={currentPage === totalPages}>
           Next
         </Button>
       </div>
