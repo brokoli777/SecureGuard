@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import "@tensorflow/tfjs";
 import * as cocoSsd from "@tensorflow-models/coco-ssd";
 import { createClient } from "@/utils/supabase/client";
-import { detectFaces, drawDetections, handleImageUpload, loadFaceApiModels } from "@/utils/vision/face";
+import '@tensorflow/tfjs';
+import * as faceapi from '@vladmandic/face-api/dist/face-api.esm.js';
 
 const ObjectDetection = () => {
   const videoRef = useRef(null);
@@ -31,12 +31,50 @@ const ObjectDetection = () => {
         const { data: { user } } = await supabase.auth.getUser();
         setUser(user);
         console.log(user.id);
+
+        //Uncomment once descriptor are uploaded in members table
+        // if (user) {
+        //   const { data: membersData, error } = await supabase
+        //     .from('members')
+        //     .select('descriptor')
+        //     .eq('team_id', user.id);
+  
+        //   if (error) {
+        //     console.error("Error fetching descriptors:", error);
+        //   } else {
+        //     const labeledDescriptorsList = membersData.map(descriptor => 
+        //       new faceapi.LabeledFaceDescriptors(descriptor.name, [Float32Array.from(descriptor.descriptor)])
+        //     );
+            
+        //     setLabeledDescriptors(labeledDescriptorsList);
+        //     console.log("Labeled Descriptors from database:", labeledDescriptorsList);
+        //   }
+        // }
       } catch (error) {
-        console.error("Error fetching user:", error);
+        console.error("Error fetching user or descriptors:", error);
       }
     };
     getUser();
   }, [supabase]);
+
+  useEffect(() => {
+    const loadModels = async () => {
+      const MODEL_URL =
+        "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js/weights";
+      try {
+        await Promise.all([
+          faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+        ]);
+        console.log("Models loaded successfully");
+        setModelsLoaded(true);
+      } catch (error) {
+        console.error("Error loading models:", error);
+      }
+    };
+    loadModels();
+  }, []);
 
   const startWebcam = async () => {
     try {
@@ -77,20 +115,83 @@ const ObjectDetection = () => {
   useEffect(() => {
     let animationFrameId;
     const runDetection = async () => {
-      const result = await detectFaces(videoRef, canvasRef, labeledDescriptors);
-      if (result) {
-        const { results, resizedDetections } = result;
-        drawDetections(canvasRef.current, resizedDetections, results);
+      if (
+        videoRef.current &&
+        canvasRef.current &&
+        labeledDescriptors.length > 0
+      ) {
+        const options = new faceapi.SsdMobilenetv1Options({
+          minConfidence: 0.5,
+        });
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+
+        console.log("labeledDescriptors", labeledDescriptors);
+
+        const detections = await faceapi
+          .detectAllFaces(video, options)
+          .withFaceLandmarks()
+          .withFaceDescriptors();
+
+        const displaySize = {
+          width: video.videoWidth,
+          height: video.videoHeight,
+        };
+
+        faceapi.matchDimensions(canvas, displaySize);
+        const resizedDetections = faceapi.resizeResults(
+          detections,
+          displaySize
+        );
+
+        // Clear canvas before drawing new detections
+        canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw bounding boxes and landmarks on canvas
+        faceapi.draw.drawDetections(canvas, resizedDetections);
+        faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+
+        console.log("labelDescriptors again....", labeledDescriptors);
+
+        // Match detections with known descriptors
+        const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.6);
+        const results = resizedDetections.map((d) =>
+          faceMatcher.findBestMatch(d.descriptor)
+        );
+
+        results.forEach((result, i) => {
+          const box = resizedDetections[i].detection.box;
+          const { label, distance } = result;
+          const confidence = (1 - distance).toFixed(2);
+
+          // Draw the box with the name and confidence inside
+          const drawBox = new faceapi.draw.DrawBox(box, {
+            label: `${label !== "unknown" ? label : "Unknown"} (${confidence})`,
+            boxColor: "green",
+          });
+          drawBox.draw(canvas);
+
+          // Log to the console with probability and name
+          console.log(
+            `Detected: ${
+              label !== "unknown" ? label : "Unknown"
+            }, Confidence: ${confidence}`
+          );
+        });
       }
       animationFrameId = requestAnimationFrame(runDetection);
     };
 
-    if (modelsLoaded && labeledDescriptors.length > 0) {
+
+    if (modelsLoaded && labeledDescriptors.length > 0 && isWebcamStarted) {
       runDetection();
+      console.log("Running detection");
     }
 
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [modelsLoaded, labeledDescriptors]);
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [modelsLoaded, labeledDescriptors, isWebcamStarted]);
 
 
   const detect = async (net) => {
@@ -157,13 +258,35 @@ const ObjectDetection = () => {
     }
   }, [isWebcamStarted]);
 
-  useEffect(() => {
-    const loadModels = async () => {
-      const success = await loadFaceApiModels();
-      setModelsLoaded(success);
-    };
-    loadModels();
-  }, []);
+  // Handle image upload and create labeled descriptors
+  const handleImageUpload = async (event) => {
+    console.log("Image uploaded");
+    const imageFile = event.target.files[0];
+    if (imageFile && modelsLoaded) {
+      const img = await faceapi.bufferToImage(imageFile);
+      const detections = await faceapi
+        .detectSingleFace(img)
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+
+      if (detections) {
+        const name = prompt("Enter the name of the person:");
+        if (name) {
+          const newDescriptor = new faceapi.LabeledFaceDescriptors(name, [
+            detections.descriptor,
+          ]);
+          setLabeledDescriptors((prev) => [...prev, newDescriptor]);
+          console.log("Labeled descriptor added:", name);
+          console.log("Labeled descriptors:", labeledDescriptors);
+
+        } else {
+          alert("Name cannot be empty.");
+        }
+      } else {
+        alert("No face detected in the image. Please try another image.");
+      }
+    }
+  };
   
 
   return (
@@ -186,11 +309,12 @@ const ObjectDetection = () => {
           <div>
           <video
             ref={videoRef}
-            className="w-full h-auto rounded"
+            // className="w-full h-auto rounded"
+            className="w-full h-full object-cover rounded-lg"
             autoPlay
             muted
-            width="640"
-            height="480"
+            // width="640"
+            // height="480"
           />
           {/* Canvas for face detection */}
           <canvas
@@ -235,9 +359,7 @@ const ObjectDetection = () => {
         <input
           type="file"
           accept="image/*"
-          onChange={(event) =>
-            handleImageUpload(event, setLabeledDescriptors, modelsLoaded)
-          }
+          onChange={handleImageUpload}
           className="px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>

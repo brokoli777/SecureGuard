@@ -68,7 +68,7 @@ export const drawDetections = (canvas, detections, results) => {
 };
 
 // Handle image upload and create labeled descriptors
-export const handleImageUpload = async (event, setLabeledDescriptors, modelsLoaded) => {
+export const handleImageUpload = async (event, modelsLoaded) => {
   const imageFile = event.target.files[0];
   if (imageFile && modelsLoaded) {
     const img = await faceapi.bufferToImage(imageFile);
