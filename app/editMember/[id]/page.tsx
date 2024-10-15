@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation"; 
+import { useEffect, useState, useRef } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,10 +10,13 @@ import { createClient } from "@/utils/supabase/client";
 const supabase = createClient();
 
 export default function EditMemberForm() {
-  const { id } = useParams(); // Extract member ID from the dynamic route
+  const params = useParams();
+  const id = params.id as string; // Extract member ID from the dynamic route
   const router = useRouter(); // Use router for redirect after update
   const [loading, setLoading] = useState(true);
-  const [image, setImage] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [image, setImage] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [errors, setErrors] = useState({
     firstName: "",
     lastName: "",
@@ -31,8 +34,9 @@ export default function EditMemberForm() {
     notes: "",
   });
 
+  const [authError, setAuthError] = useState<string | null>(null); // New state for auth error
 
-  // Fetch member data on component mount
+  // Fetch member data and check if user is authorized to edit
   useEffect(() => {
     if (!id) {
       console.error("Member ID is missing. Cannot fetch data.");
@@ -42,14 +46,31 @@ export default function EditMemberForm() {
     const fetchMember = async () => {
       console.log("Fetching member data for member ID:", id);
 
+      // Fetch the logged-in user
+      const { data: user, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        setAuthError("You are not authorized to edit this member.");
+        setLoading(false);
+        return;
+      }
+
+      // Fetch member data
       const { data, error } = await supabase
         .from("members")
         .select("*")
-        .eq("member_id", id) 
+        .eq("member_id", id)
         .single();
 
       if (error) {
         console.error("Error fetching member data:", error);
+        return;
+      }
+
+      // Check if the logged-in user is authorized to edit (based on member_id, team_id, or any other field)
+      if (data.team_id !== user.user.id) {
+        setAuthError("You are not authorized to edit this member.");
+        setLoading(false);
         return;
       }
 
@@ -65,15 +86,17 @@ export default function EditMemberForm() {
         notes: data.notes || "",
       });
 
-      setImage(data.photo_url || ""); // Fetch photo URL if exists
-      setLoading(false);;
+      setImagePreview(data.photo_url || ""); // Fetch photo URL if exists
+      setLoading(false);
     };
 
     fetchMember();
   }, [id]);
 
   // Handle form input change
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
@@ -85,73 +108,78 @@ export default function EditMemberForm() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setImage(imageUrl);
-
-      //  upload the image to a storage service
-      // and save the URL in your database.
+      setImage(file);
+      setImagePreview(URL.createObjectURL(file));
     }
   };
 
   const handleRemoveImage = () => {
-    setImage(null); // Remove image
+    setImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   // Handle form submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Debug: Check form data before submission
+    if (authError) {
+      return; // Prevent submission if user is not authorized
+    }
+
     console.log("Submitting updated form data:", formData);
 
     try {
-      const { error } = await supabase
-        .from("members")
-        .update({
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          email: formData.email,
-          phone_number: formData.phoneNumber, // Updated fields
-          street_address: formData.streetAddress,
-          city: formData.city,
-          notes: formData.notes,
-          //photo_url: image, // Update the photo URL in the database
-        })
-        .eq("member_id", id); 
-
-      if (error) {
-        console.error("Error updating member:", error);
-      } else {
-        console.log("Member updated successfully");
-        router.push("/memberList"); // Redirect to member list after successful update
+      const formDataToSend = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        formDataToSend.append(key, value);
+      });
+      if (image) {
+        formDataToSend.append("image", image);
       }
+
+      const response = await fetch(`/api/members/${id}`, {
+        method: "PUT",
+        body: formDataToSend,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update member");
+      }
+
+      console.log("Member updated successfully");
+      router.push("/memberList");
     } catch (err) {
       console.error("Error updating member:", err);
     }
   };
 
-  // Handle delete member
   const handleDelete = async () => {
+    if (authError) {
+      return; // Prevent deletion if user is not authorized
+    }
+
     try {
       const { error } = await supabase
         .from("members")
         .delete()
-        .eq("member_id", id); // Ensure you're deleting by 'member_id'
+        .eq("member_id", id);
 
       if (error) {
         console.error("Error deleting member:", error);
       } else {
         console.log("Member deleted successfully");
-        router.push("/memberList"); // Redirect to member list after successful deletion
+        router.push("/memberList");
       }
     } catch (err) {
       console.error("Error deleting member:", err);
     }
   };
 
-  // Handle cancel action (redirect back)
   const handleCancel = () => {
-    router.push("/memberList"); // Redirect to member list
+    router.push("/memberList");
   };
 
   return (
@@ -160,23 +188,25 @@ export default function EditMemberForm() {
 
       {loading ? (
         <p>Loading member data...</p>
+      ) : authError ? ( // Show auth error if present
+        <div className="text-red-500 font-semibold">
+          {authError}
+        </div>
       ) : (
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-8">
           {/* Left side: Image Upload */}
           <div className="flex flex-col relative">
-            {image ? (
+            {imagePreview ? (
               <div className="relative w-48 h-48">
                 <img
-                  src={image}
+                  src={imagePreview}
                   alt="Uploaded user"
                   className="w-full h-full object-cover mb-4"
                 />
-                {/* Remove button on the image (top-right corner) */}
                 <button
                   type="button"
                   onClick={handleRemoveImage}
-                  className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                >
+                  className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
                   ✕
                 </button>
               </div>
@@ -188,18 +218,18 @@ export default function EditMemberForm() {
             <label htmlFor="imageUpload" className="text-left">
               Upload User Image
             </label>
-            {/* Custom file input label */}
             <label
               htmlFor="imageUpload"
-              className="mt-2 w-36 cursor-pointer bg-blue-500 text-white p-2 text-center rounded"
-            >
+              className="mt-2 w-36 cursor-pointer bg-blue-500 text-white p-2 text-center rounded">
               Browse...
             </label>
             <Input
               type="file"
               id="imageUpload"
               onChange={handleImageUpload}
+              ref={fileInputRef}
               className="hidden"
+              accept="image/*"
             />
           </div>
 
@@ -288,16 +318,15 @@ export default function EditMemberForm() {
           {/* Buttons: Delete on the left, Update and Cancel on the right */}
           <div className="col-span-2 flex justify-between mt-4">
             <Button variant="destructive" onClick={handleDelete}>
-                Delete Member
-              </Button>
+              Delete Member
+            </Button>
             <div className="flex gap-4">
               <Button variant="outline" onClick={handleCancel}>
                 Cancel
               </Button>
               <Button type="submit" className="mr-auto">
-              Update Member
-            </Button>
-            
+                Update Member
+              </Button>
             </div>
           </div>
         </form>

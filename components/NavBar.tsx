@@ -10,8 +10,8 @@ import {
   NavigationMenuContent,
   NavigationMenuIndicator,
   NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
+  NavigationMenuLink,
   NavigationMenuTrigger,
   NavigationMenuViewport,
 } from "@/components/ui/navigation-menu"; // Import from your UI components
@@ -54,6 +54,15 @@ export default async function NavBar() {
                         </Link>
                       </NavigationMenuLink>
                     </li>
+                    <li>
+                      <NavigationMenuLink asChild>
+                        <Link
+                          href="/editUser"
+                          className="block px-4 py-2 hover:bg-accent rounded">
+                          Edit Profile
+                        </Link>
+                      </NavigationMenuLink>
+                    </li>
                   </ul>
                 </NavigationMenuContent>
               </NavigationMenuItem>
@@ -64,49 +73,10 @@ export default async function NavBar() {
 
           {user && (
             <>
-              {/* Members Dropdown */}
-              <NavigationMenu>
-                <NavigationMenuList>
-                  <NavigationMenuItem>
-                    <NavigationMenuTrigger className="hover:underline">
-                      Members
-                    </NavigationMenuTrigger>
-                    <NavigationMenuContent>
-                      <ul className="p-4 bg-background rounded-md shadow-lg">
-                        <li>
-                          <NavigationMenuLink asChild>
-                            <Link
-                              href="/newMember"
-                              className="block px-4 py-2 hover:bg-accent rounded">
-                              Add New Member
-                            </Link>
-                          </NavigationMenuLink>
-                        </li>
-                        <li>
-                          <NavigationMenuLink asChild>
-                            <Link
-                              href="/editMember"
-                              className="block px-4 py-2 hover:bg-accent rounded">
-                              Edit Members
-                            </Link>
-                          </NavigationMenuLink>
-                        </li>
-                        <li>
-                          <NavigationMenuLink asChild>
-                            <Link
-                              href="/memberList"
-                              className="block px-4 py-2 hover:bg-accent rounded">
-                              Member List
-                            </Link>
-                          </NavigationMenuLink>
-                        </li>
-                      </ul>
-                    </NavigationMenuContent>
-                  </NavigationMenuItem>
-                </NavigationMenuList>
-                <NavigationMenuIndicator />
-                <NavigationMenuViewport />
-              </NavigationMenu>
+              {/* Members link */}
+              <Link href="/memberList" className="hover:underline">
+                Members
+              </Link>
 
               {/* System Features Dropdown */}
               <NavigationMenu>

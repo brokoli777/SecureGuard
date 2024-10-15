@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   Table,
   TableBody,
@@ -12,15 +13,15 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/utils/supabase/client"; // Ensure this is the client-side client
-
+import { createClient } from "@/utils/supabase/client"; 
 const supabase = createClient();
 
 interface Member {
-  member_id: number; // Change this to use the correct column from your table
+  member_id: number;
   first_name: string;
   last_name: string;
   email: string;
+  photo_url: string | null;
 }
 
 export default function MemberList() {
@@ -31,7 +32,7 @@ export default function MemberList() {
   const [filteredMembers, setFilteredMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter(); // Initialize router for navigation
+  const router = useRouter(); 
 
   // Fetch members from Supabase
   useEffect(() => {
@@ -73,6 +74,10 @@ export default function MemberList() {
 
   const totalPages = Math.ceil(filteredMembers.length / membersPerPage);
 
+  const handleMemberClick = (member_id: number) => {
+    router.push(`/memberAccount/${member_id}`); // Navigate to the member account page
+  };
+
   const handleEditClick = (member_id: number) => {
     router.push(`/editMember/${member_id}`); // Navigate to the editMember page with the member_id
   };
@@ -108,6 +113,7 @@ export default function MemberList() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Photo</TableHead>
               <TableHead>First Name</TableHead>
               <TableHead>Last Name</TableHead>
               <TableHead>Email</TableHead>
@@ -117,7 +123,29 @@ export default function MemberList() {
           <TableBody>
             {currentMembers.length > 0 ? (
               currentMembers.map((member) => (
-                <TableRow key={member.member_id}>
+                <TableRow
+                  key={member.member_id}
+                  onClick={() => handleMemberClick(member.member_id)} // Navigate to member's account page on row click
+                  className="cursor-pointer"
+                >
+                  <TableCell>
+                    {member.photo_url ? (
+                      <Image
+                        src={member.photo_url}
+                        alt={`${member.first_name} ${member.last_name}`}
+                        width={64}
+                        height={64}
+                        className="rounded-full"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+                        <span className="text-gray-500 text-lg">
+                          {member.first_name.charAt(0)}
+                          {member.last_name.charAt(0)}
+                        </span>
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell>{member.first_name}</TableCell>
                   <TableCell>{member.last_name}</TableCell>
                   <TableCell>{member.email}</TableCell>
@@ -125,7 +153,10 @@ export default function MemberList() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleEditClick(member.member_id)} // Pass member_id for the edit page
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent triggering row click event
+                        handleEditClick(member.member_id);
+                      }}
                     >
                       ✏️
                     </Button>
@@ -134,7 +165,7 @@ export default function MemberList() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} className="text-center">
+                <TableCell colSpan={5} className="text-center">
                   No members found
                 </TableCell>
               </TableRow>

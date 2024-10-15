@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation"; // Import the router for redirection
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 
 export default function NewMemberForm() {
   const router = useRouter(); // Initialize the router
-  const [image, setImage] = useState<string | null>(null);
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -47,7 +49,9 @@ export default function NewMemberForm() {
     if (name === "firstName" || name === "lastName") {
       setErrors((prevErrors) => ({
         ...prevErrors,
-        [name]: value ? "" : `${name === "firstName" ? "First" : "Last"} name is required`,
+        [name]: value
+          ? ""
+          : `${name === "firstName" ? "First" : "Last"} name is required`,
       }));
     }
 
@@ -64,7 +68,8 @@ export default function NewMemberForm() {
     if (name === "phoneNumber") {
       setErrors((prevErrors) => ({
         ...prevErrors,
-        phoneNumber: value.length === 10 ? "" : "Phone number must be exactly 10 digits",
+        phoneNumber:
+          value.length === 10 ? "" : "Phone number must be exactly 10 digits",
       }));
     }
   };
@@ -85,13 +90,18 @@ export default function NewMemberForm() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImage(URL.createObjectURL(file));
+      setImage(file);
+      setImagePreview(URL.createObjectURL(file));
     }
   };
 
   // Remove the uploaded image
   const handleRemoveImage = () => {
     setImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   // Handle form submission
@@ -115,18 +125,22 @@ export default function NewMemberForm() {
     // If form is valid, send data to the server
     if (formIsValid && !errors.email && !errors.phoneNumber) {
       try {
+        const formDataToSend = new FormData();
+        Object.entries(formData).forEach(([key, value]) => {
+          formDataToSend.append(key, value);
+        });
+        if (image) {
+          formDataToSend.append("image", image);
+        }
+
         const response = await fetch("/api/members", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
+          body: formDataToSend,
         });
 
         if (response.ok) {
           const data = await response.json();
           console.log("Member added successfully:", data);
-          // Redirect to the member list page after successful addition
           router.push("/memberList");
         } else {
           const errorData = await response.json();
@@ -154,10 +168,11 @@ export default function NewMemberForm() {
         {Object.values(errors).some((error) => error) && (
           <div className="text-red-500 text-sm">
             <ul>
-              {Object.keys(errors).map((field) =>
-                errors[field as keyof typeof errors] && (
-                  <li key={field}>{errors[field as keyof typeof errors]}</li>
-                )
+              {Object.keys(errors).map(
+                (field) =>
+                  errors[field as keyof typeof errors] && (
+                    <li key={field}>{errors[field as keyof typeof errors]}</li>
+                  )
               )}
             </ul>
           </div>
@@ -168,18 +183,17 @@ export default function NewMemberForm() {
       <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-8">
         {/* Left side: Image Upload */}
         <div className="flex flex-col relative">
-          {image ? (
+          {imagePreview ? (
             <div className="relative w-48 h-48">
               <img
-                src={image}
+                src={imagePreview}
                 alt="Uploaded user"
                 className="w-full h-full object-cover mb-4"
               />
               <button
                 type="button"
                 onClick={handleRemoveImage}
-                className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-              >
+                className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
                 ✕
               </button>
             </div>
@@ -193,15 +207,16 @@ export default function NewMemberForm() {
           </label>
           <label
             htmlFor="imageUpload"
-            className="mt-2 w-36 cursor-pointer bg-blue-500 text-white p-2 text-center rounded"
-          >
+            className="mt-2 w-36 cursor-pointer bg-blue-500 text-white p-2 text-center rounded">
             Browse...
           </label>
           <Input
             type="file"
             id="imageUpload"
             onChange={handleImageUpload}
+            ref={fileInputRef}
             className="hidden"
+            accept="image/*"
           />
         </div>
 
