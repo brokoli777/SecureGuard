@@ -1,27 +1,28 @@
 import { Table, TableHead, TableRow, TableBody, TableCell, TableHeader } from "@/components/ui/table";
 
+// Updated EventTable to use correct event data fields
 export default function EventTable({ data }) {
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>ID</TableHead>
-          <TableHead>Type</TableHead>
+          <TableHead>Category</TableHead>
           <TableHead>Date</TableHead>
           <TableHead>Time</TableHead>
-          <TableHead>Name/Unrecognized</TableHead>
-          <TableHead>Alert</TableHead>
+          <TableHead>Team ID</TableHead>
+          <TableHead>Object Confidence</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {data.map((event) => (
-          <TableRow key={event.id}>
-            <TableCell>{event.id}</TableCell>
-            <TableCell>{event.type}</TableCell>
-            <TableCell>{event.date}</TableCell>
-            <TableCell>{event.time}</TableCell>
-            <TableCell>{event.name}</TableCell>
-            <TableCell className={getAlertStyle(event.alert)}>{event.alert}</TableCell>
+          <TableRow key={event.event_id}>
+            <TableCell>{event.event_id}</TableCell>
+            <TableCell>{event.category}</TableCell>
+            <TableCell>{new Date(event.date_time).toLocaleDateString()}</TableCell>
+            <TableCell>{new Date(event.date_time).toLocaleTimeString()}</TableCell>
+            <TableCell>{event.team_id}</TableCell>
+            <TableCell>{event.object_confidence}</TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -29,7 +30,7 @@ export default function EventTable({ data }) {
   );
 }
 
-// Helper function to style alert levels
+// Helper function to style alert levels (if applicable in future)
 function getAlertStyle(alert) {
   switch (alert) {
     case 'Low':
