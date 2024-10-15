@@ -54,6 +54,15 @@ export default async function NavBar() {
                         </Link>
                       </NavigationMenuLink>
                     </li>
+                    <li>
+                      <NavigationMenuLink asChild>
+                        <Link
+                          href="/editUser"
+                          className="block px-4 py-2 hover:bg-accent rounded">
+                          Edit Profile
+                        </Link>
+                      </NavigationMenuLink>
+                    </li>
                   </ul>
                 </NavigationMenuContent>
               </NavigationMenuItem>
