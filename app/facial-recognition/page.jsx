@@ -163,12 +163,12 @@ const FaceRecognition = () => {
           ref={videoRef}
           autoPlay
           muted
-          className="w-full h-full object-cover rounded-lg transform scale-x-[-1]"
+          className="w-full h-full object-cover rounded-lg"
         />
         {/* Canvas for face detection */}
         <canvas
           ref={canvasRef}
-          className="absolute top-0 left-0 w-full h-full transform scale-x-[-1]"
+          className="absolute top-0 left-0 w-full h-full"
         />
       </div>
 
