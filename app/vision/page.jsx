@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import * as cocoSsd from "@tensorflow-models/coco-ssd";
 import { createClient } from "@/utils/supabase/client";
-import '@tensorflow/tfjs';
-import * as faceapi from '@vladmandic/face-api/dist/face-api.esm.js';
+import "@tensorflow/tfjs";
+import * as faceapi from "face-api.js";
+
 
 const ObjectDetection = () => {
   const videoRef = useRef(null);
