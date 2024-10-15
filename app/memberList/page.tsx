@@ -13,12 +13,11 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/utils/supabase/client"; // Ensure this is the client-side client
-
+import { createClient } from "@/utils/supabase/client"; 
 const supabase = createClient();
 
 interface Member {
-  member_id: number; // Change this to use the correct column from your table
+  member_id: number;
   first_name: string;
   last_name: string;
   email: string;
@@ -33,7 +32,7 @@ export default function MemberList() {
   const [filteredMembers, setFilteredMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter(); // Initialize router for navigation
+  const router = useRouter(); 
 
   // Fetch members from Supabase
   useEffect(() => {
@@ -74,6 +73,10 @@ export default function MemberList() {
   );
 
   const totalPages = Math.ceil(filteredMembers.length / membersPerPage);
+
+  const handleMemberClick = (member_id: number) => {
+    router.push(`/memberAccount/${member_id}`); // Navigate to the member account page
+  };
 
   const handleEditClick = (member_id: number) => {
     router.push(`/editMember/${member_id}`); // Navigate to the editMember page with the member_id
@@ -120,7 +123,11 @@ export default function MemberList() {
           <TableBody>
             {currentMembers.length > 0 ? (
               currentMembers.map((member) => (
-                <TableRow key={member.member_id}>
+                <TableRow
+                  key={member.member_id}
+                  onClick={() => handleMemberClick(member.member_id)} // Navigate to member's account page on row click
+                  className="cursor-pointer"
+                >
                   <TableCell>
                     {member.photo_url ? (
                       <Image
@@ -146,7 +153,11 @@ export default function MemberList() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleEditClick(member.member_id)}>
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent triggering row click event
+                        handleEditClick(member.member_id);
+                      }}
+                    >
                       ✏️
                     </Button>
                   </TableCell>
@@ -168,7 +179,8 @@ export default function MemberList() {
         <Button
           variant="outline"
           onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}>
+          disabled={currentPage === 1}
+        >
           Prev
         </Button>
         <div className="flex space-x-2 mx-4">
@@ -176,17 +188,17 @@ export default function MemberList() {
             <Button
               key={i}
               variant={currentPage === i + 1 ? "default" : "outline"}
-              onClick={() => setCurrentPage(i + 1)}>
+              onClick={() => setCurrentPage(i + 1)}
+            >
               {i + 1}
             </Button>
           ))}
         </div>
         <Button
           variant="outline"
-          onClick={() =>
-            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-          }
-          disabled={currentPage === totalPages}>
+          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+          disabled={currentPage === totalPages}
+        >
           Next
         </Button>
       </div>
