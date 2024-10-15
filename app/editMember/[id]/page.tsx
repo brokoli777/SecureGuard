@@ -34,7 +34,9 @@ export default function EditMemberForm() {
     notes: "",
   });
 
-  // Fetch member data on component mount
+  const [authError, setAuthError] = useState<string | null>(null); // New state for auth error
+
+  // Fetch member data and check if user is authorized to edit
   useEffect(() => {
     if (!id) {
       console.error("Member ID is missing. Cannot fetch data.");
@@ -44,6 +46,16 @@ export default function EditMemberForm() {
     const fetchMember = async () => {
       console.log("Fetching member data for member ID:", id);
 
+      // Fetch the logged-in user
+      const { data: user, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        setAuthError("You are not authorized to edit this member.");
+        setLoading(false);
+        return;
+      }
+
+      // Fetch member data
       const { data, error } = await supabase
         .from("members")
         .select("*")
@@ -52,6 +64,13 @@ export default function EditMemberForm() {
 
       if (error) {
         console.error("Error fetching member data:", error);
+        return;
+      }
+
+      // Check if the logged-in user is authorized to edit (based on member_id, team_id, or any other field)
+      if (data.team_id !== user.user.id) {
+        setAuthError("You are not authorized to edit this member.");
+        setLoading(false);
         return;
       }
 
@@ -101,11 +120,15 @@ export default function EditMemberForm() {
       fileInputRef.current.value = "";
     }
   };
+
   // Handle form submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Debug: Check form data before submission
+    if (authError) {
+      return; // Prevent submission if user is not authorized
+    }
+
     console.log("Submitting updated form data:", formData);
 
     try {
@@ -134,6 +157,10 @@ export default function EditMemberForm() {
   };
 
   const handleDelete = async () => {
+    if (authError) {
+      return; // Prevent deletion if user is not authorized
+    }
+
     try {
       const { error } = await supabase
         .from("members")
@@ -154,12 +181,17 @@ export default function EditMemberForm() {
   const handleCancel = () => {
     router.push("/memberList");
   };
+
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-4">Edit Member Form</h1>
 
       {loading ? (
         <p>Loading member data...</p>
+      ) : authError ? ( // Show auth error if present
+        <div className="text-red-500 font-semibold">
+          {authError}
+        </div>
       ) : (
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-8">
           {/* Left side: Image Upload */}
@@ -171,7 +203,6 @@ export default function EditMemberForm() {
                   alt="Uploaded user"
                   className="w-full h-full object-cover mb-4"
                 />
-                {/* Remove button on the image (top-right corner) */}
                 <button
                   type="button"
                   onClick={handleRemoveImage}
@@ -187,7 +218,6 @@ export default function EditMemberForm() {
             <label htmlFor="imageUpload" className="text-left">
               Upload User Image
             </label>
-            {/* Custom file input label */}
             <label
               htmlFor="imageUpload"
               className="mt-2 w-36 cursor-pointer bg-blue-500 text-white p-2 text-center rounded">

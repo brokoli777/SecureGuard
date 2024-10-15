@@ -8,7 +8,7 @@ import { createClient } from "@/utils/supabase/client";
 const supabase = createClient();
 
 export default function MemberDetailsPage() {
-  const { id } = useParams(); // Get the member ID from the URL
+  const { id } = useParams(); 
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [memberData, setMemberData] = useState<any>(null);
@@ -21,7 +21,7 @@ export default function MemberDetailsPage() {
       const { data, error } = await supabase
         .from("members")
         .select("*")
-        .eq("member_id", id) // Query by member_id from the URL
+        .eq("member_id", id) 
         .single();
 
       if (error) {
@@ -44,73 +44,66 @@ export default function MemberDetailsPage() {
 
   return (
     <div className="container mx-auto p-6">
-      {/* Display the full name as the title */}
-      <h1 className="text-2xl font-bold mb-4">{fullName}</h1>
+      {/* Main Card Layout */}
+      <div className="flex justify-center">
+        <div className=" p-6 rounded-lg shadow-lg w-full max-w-4xl flex">
+          
+          {/* Left side: Profile Image and Log History Button */}
+          <div className="w-1/3 flex flex-col justify-center items-center">
+            {memberData.photo_url ? (
+              <img
+                src={memberData.photo_url}
+                alt="Member Image"
+                className="w-40 h-40 object-cover mb-4 rounded-full"
+              />
+            ) : (
+              <div className="w-40 h-40 bg-gray-200 flex items-center justify-center mb-4 rounded-full">
+                No Image
+              </div>
+            )}
+            {/* Activity Log Button below the profile image */}
+            <Button
+              variant="outline"
+              onClick={() => router.push(`/logHistory/${id}`)}
+              className="mt-4"
+            >
+              View Log History
+            </Button>
+          </div>
 
-      <div className="grid grid-cols-3 gap-8">
-        {/* Left side: Member Image */}
-        <div className="flex flex-col items-center">
-          {memberData.photo_url ? (
-            <img
-              src={memberData.photo_url}
-              alt="Member Image"
-              className="w-48 h-48 object-cover mb-4 rounded-full"
-            />
-          ) : (
-            <div className="w-48 h-48 bg-gray-200 flex items-center justify-center mb-4 rounded-full">
-              No Image
+          {/* Right side: Member Info */}
+          <div className="w-2/3 pl-8 flex flex-col">
+            
+            {/* Member Name and Edit Button */}
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-3xl font-semibold">{fullName}</h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/editMember/${id}`)}
+              >
+                ✏️ Edit
+              </Button>
             </div>
-          )}
-        </div>
 
-        {/* Right side: Member Information */}
-        <div className="col-span-2 flex flex-col space-y-4 p-4 rounded-md shadow-md">
-          <div className="flex gap-4">
-            <label className="font-semibold w-1/3">Phone Number:</label>
-            <div className="w-2/3">{memberData.phone_number || "N/A"}</div>
-          </div>
+            {/* Team ID */}
+            <div className="text-gray-500 mb-4">
+              <p>Team ID: {memberData.team_id || "N/A"}</p>
+            </div>
 
-          <div className="flex gap-4">
-            <label className="font-semibold w-1/3">Email:</label>
-            <div className="w-2/3">{memberData.email || "N/A"}</div>
-          </div>
+            {/* Divider Line */}
+            <hr className="mb-4" />
 
-          <div className="flex gap-4">
-            <label className="font-semibold w-1/3">Street Address:</label>
-            <div className="w-2/3">{memberData.street_address || "N/A"}</div>
-          </div>
-
-          <div className="flex gap-4">
-            <label className="font-semibold w-1/3">City:</label>
-            <div className="w-2/3">{memberData.city || "N/A"}</div>
-          </div>
-
-          <div className="flex gap-4">
-            <label className="font-semibold w-1/3">Team ID:</label>
-            <div className="w-2/3">{memberData.team_id || "N/A"}</div>
-          </div>
-
-          <div className="flex gap-4">
-            <label className="font-semibold w-1/3">Notes:</label>
-            <div className="w-2/3">{memberData.notes || "N/A"}</div>
+            {/* Contact and Location Information */}
+            <div className="space-y-2">
+              <p><strong>Email:</strong> {memberData.email || "N/A"}</p>
+              <p><strong>Phone:</strong> {memberData.phone_number || "N/A"}</p>
+              <p><strong>Street Address:</strong> {memberData.street_address || "N/A"}</p>
+              <p><strong>City:</strong> {memberData.city || "N/A"}</p>
+              <p><strong>Notes:</strong> {memberData.notes || "N/A"}</p>
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Buttons stacked on the left side */}
-      <div className="flex flex-col items-start mt-6 space-y-4">
-        <Button
-          variant="outline"
-          onClick={() => router.push(`/editMember/${id}`)}
-        >
-          Edit Member
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => router.push(`/logHistory/${id}`)} // Navigate to log history page
-        >
-          View Log History
-        </Button>
       </div>
     </div>
   );
