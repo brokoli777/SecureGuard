@@ -23,7 +23,7 @@ const ObjectDetection = () => {
   const lastLoggedTime = useRef(0);
 
   const detectionIntervalMs = 10; 
-  const slowedDetectionIntervalMs = 500;
+  const slowedDetectionIntervalMs = 1000;
   const supabasePostReqIntervalMs = 2000;
 
   useEffect(() => {
