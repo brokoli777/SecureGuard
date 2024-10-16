@@ -28,5 +28,5 @@ Run the application locally
 npm run dev
 ```
 
-The application is also hosted online on vercel.
+The application is also hosted online on vercel at https://secure-guard-three.vercel.app
 
