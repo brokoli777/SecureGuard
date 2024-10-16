@@ -36,7 +36,8 @@ export default function TestEventsPage() {
         const { data: events, error } = await supabase
           .from('events')
           .select('*')
-          .eq('team_id', user.id);
+          .eq('team_id', user.id)
+          .order('date_time', { ascending: false });
 
         if (error) {
           setError(error.message);
