@@ -7,9 +7,17 @@ import EventLogDashboard from '@/components/EventLogDashboard';
 
 const supabase = createClient();
 
+interface Event {
+  id: number;
+  category: string;
+  date_time: string;
+  team_id: number;
+  object_confidence: number;
+}
+
 export default function TestEventsPage() {
-  const [events, setEvents] = useState([]);
-  const [filteredEvents, setFilteredEvents] = useState([]); 
+  const [events, setEvents] = useState<Event[]>([]);
+  const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -53,52 +61,52 @@ export default function TestEventsPage() {
     fetchEvents();
   }, []);
 
-  // Handle search input
-  const handleSearch = (searchValue) => {
-    setSearchTerm(searchValue);
-    filterEvents(searchValue, filterDate, selectedCategory);
-  };
+  // // Handle search input
+  // const handleSearch = (searchValue) => {
+  //   setSearchTerm(searchValue);
+  //   filterEvents(searchValue, filterDate, selectedCategory);
+  // };
 
-  // Handle date filter
-  const handleDateFilter = (dateValue) => {
-    setFilterDate(dateValue);
-    filterEvents(searchTerm, dateValue, selectedCategory);
-  };
+  // // Handle date filter
+  // const handleDateFilter = (dateValue) => {
+  //   setFilterDate(dateValue);
+  //   filterEvents(searchTerm, dateValue, selectedCategory);
+  // };
 
-  // Handle category filter
-  const handleCategoryFilter = (category) => {
-    setSelectedCategory(category);
-    filterEvents(searchTerm, filterDate, category);
-  };
+  // // Handle category filter
+  // const handleCategoryFilter = (category) => {
+  //   setSelectedCategory(category);
+  //   filterEvents(searchTerm, filterDate, category);
+  // };
 
-  // Function to filter events based on the search term, date, and category
-  const filterEvents = (searchTerm, filterDate, selectedCategory) => {
-    let filtered = events;
+  // // Function to filter events based on the search term, date, and category
+  // const filterEvents = (searchTerm, filterDate, selectedCategory) => {
+  //   let filtered = events;
 
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter(event =>
-        event.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.team_id.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
+  //   // Filter by search term
+  //   if (searchTerm) {
+  //     filtered = filtered.filter(event =>
+  //       event.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //       event.team_id.toLowerCase().includes(searchTerm.toLowerCase())
+  //     );
+  //   }
 
-    // Filter by date
-    if (filterDate) {
-      filtered = filtered.filter(event => {
-        // Extract event date and format it as YYYY-MM-DD 
-        const eventDate = new Date(event.date_time).toISOString().split('T')[0];
-        return eventDate === filterDate;
-      });
-    }
+  //   // Filter by date
+  //   if (filterDate) {
+  //     filtered = filtered.filter(event => {
+  //       // Extract event date and format it as YYYY-MM-DD 
+  //       const eventDate = new Date(event.date_time).toISOString().split('T')[0];
+  //       return eventDate === filterDate;
+  //     });
+  //   }
 
-    // Filter by category
-    if (selectedCategory) {
-      filtered = filtered.filter(event => event.category === selectedCategory);
-    }
+  //   // Filter by category
+  //   if (selectedCategory) {
+  //     filtered = filtered.filter(event => event.category === selectedCategory);
+  //   }
 
-    setFilteredEvents(filtered);
-  };
+  //   setFilteredEvents(filtered);
+  // };
 
   if (loading) {
     return <div>Loading...</div>;
@@ -110,11 +118,11 @@ export default function TestEventsPage() {
 
   return (
     <div>
-      <EventLogDashboard
+      {/* <EventLogDashboard
         onSearch={handleSearch}
         onDateFilter={handleDateFilter}
         onCategoryFilter={handleCategoryFilter}
-      />
+      /> */}
       {filteredEvents.length === 0 ? (
         <p>No events found for the current user.</p>
       ) : (
