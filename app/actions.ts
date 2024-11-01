@@ -52,7 +52,7 @@ export const signInAction = async (formData: FormData) => {
 
   // return redirect("/protected");
   //Go to event logs page with login success message
-  return redirect("/event-logs");
+  return redirect("/event-log");
 };
 
 export const forgotPasswordAction = async (formData: FormData) => {
