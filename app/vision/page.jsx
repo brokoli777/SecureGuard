@@ -5,7 +5,7 @@ import * as cocoSsd from "@tensorflow-models/coco-ssd";
 import { createClient } from "@/utils/supabase/client";
 import "@tensorflow/tfjs";
 import * as faceapi from "face-api.js";
-
+import cv from "opencv.js";
 
 const ObjectDetection = () => {
   const videoRef = useRef(null);
@@ -19,17 +19,23 @@ const ObjectDetection = () => {
 
   const supabase = createClient();
   const detectionBuffer = useRef([]);
-  const detectionIntervalId = useRef(null); 
+  const detectionIntervalId = useRef(null);
   const lastLoggedTime = useRef(0);
 
-  const detectionIntervalMs = 10; 
+  const detectionIntervalMs = 10;
   const slowedDetectionIntervalMs = 1000;
   const supabasePostReqIntervalMs = 2000;
+
+  const fireClassifier = useRef(null);
+  const gunClassifier = useRef(null);
+
 
   useEffect(() => {
     const getUser = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         setUser(user);
         console.log(user.id);
 
@@ -39,14 +45,14 @@ const ObjectDetection = () => {
         //     .from('members')
         //     .select('descriptor')
         //     .eq('team_id', user.id);
-  
+
         //   if (error) {
         //     console.error("Error fetching descriptors:", error);
         //   } else {
-        //     const labeledDescriptorsList = membersData.map(descriptor => 
+        //     const labeledDescriptorsList = membersData.map(descriptor =>
         //       new faceapi.LabeledFaceDescriptors(descriptor.name, [Float32Array.from(descriptor.descriptor)])
         //     );
-            
+
         //     setLabeledDescriptors(labeledDescriptorsList);
         //     console.log("Labeled Descriptors from database:", labeledDescriptorsList);
         //   }
@@ -75,6 +81,7 @@ const ObjectDetection = () => {
       }
     };
     loadModels();
+    loadCascade();
   }, []);
 
   const startWebcam = async () => {
@@ -111,6 +118,46 @@ const ObjectDetection = () => {
     detectionIntervalId.current = setInterval(() => {
       detect(net);
     }, detectionIntervalMs);
+  };
+
+  const loadCascade = async () => {
+    try {
+      // Fetch the Haar cascade XML files
+      const fireResponse = await fetch('/haarcascade_fire.xml');
+      const gunResponse = await fetch('/haarcascade_gun.xml');
+  
+      if (!fireResponse.ok || !gunResponse.ok) {
+        throw new Error('Failed to fetch Haar cascade XML files');
+      }
+  
+      const fireBuffer = await fireResponse.arrayBuffer();
+      const gunBuffer = await gunResponse.arrayBuffer();
+  
+      if (!fireBuffer || !gunBuffer) {
+        throw new Error('Failed to convert responses to ArrayBuffers');
+      }
+  
+      cv.FS_createDataFile('/', 'haarcascade_fire.xml', new Uint8Array(fireBuffer), true, false, false);
+      cv.FS_createDataFile('/', 'haarcascade_gun.xml', new Uint8Array(gunBuffer), true, false, false);
+  
+      fireClassifier.current = new cv.CascadeClassifier();
+      gunClassifier.current = new cv.CascadeClassifier();
+  
+      if (!fireClassifier.current.load('/haarcascade_fire.xml')) {
+        console.error("Error loading Haar Cascade XML file for fire detection.");
+      } else {
+        console.log("Haar Cascade loaded successfully for fire detection");
+      }
+  
+      if (!gunClassifier.current.load('/haarcascade_gun.xml')) {
+        console.error("Error loading Haar Cascade XML file for gun detection.");
+      } else {
+        console.log("Haar Cascade loaded successfully for gun detection");
+      }
+  
+    } catch (error) {
+      console.error("Error loading Haar Cascades:", error);
+    }
   };
 
   useEffect(() => {
@@ -152,8 +199,6 @@ const ObjectDetection = () => {
         faceapi.draw.drawDetections(canvas, resizedDetections);
         faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
 
-        console.log("labelDescriptors again....", labeledDescriptors);
-
         // Match detections with known descriptors
         const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.6);
         const results = resizedDetections.map((d) =>
@@ -183,7 +228,6 @@ const ObjectDetection = () => {
       animationFrameId = requestAnimationFrame(runDetection);
     };
 
-
     if (modelsLoaded && labeledDescriptors.length > 0 && isWebcamStarted) {
       runDetection();
       console.log("Running detection");
@@ -194,12 +238,13 @@ const ObjectDetection = () => {
     };
   }, [modelsLoaded, labeledDescriptors, isWebcamStarted]);
 
-
   const detect = async (net) => {
     const video = videoRef.current;
+    const canvas = canvasRef.current;
 
     if (!video || video.readyState < 4 || !isWebcamStarted) return;
 
+    // Set video dimensions once
     const videoWidth = video.videoWidth;
     const videoHeight = video.videoHeight;
 
@@ -208,23 +253,66 @@ const ObjectDetection = () => {
 
     // Make object detections
     const obj = await net.detect(video);
-    setPredictions(obj);
-
     console.log("Detected objects:", obj);
 
+    const context = canvas.getContext("2d");
+    const src = new cv.Mat(videoHeight, videoWidth, cv.CV_8UC4);
+    const gray = new cv.Mat();
+    const fires = new cv.RectVector();
+    const guns = new cv.RectVector();
+
+    if (fireClassifier.current && gunClassifier.current) {
+        const cap = new cv.VideoCapture(video);
+        cap.read(src);
+        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+
+        fireClassifier.current.detectMultiScale(gray, fires, 1.1, 12, 0);
+        gunClassifier.current.detectMultiScale(gray, guns, 1.3, 20, 0);
+
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        console.log(`${fires.size()} Fires(s) detected`);
+        console.log(`${guns.size()} Gun(s) detected`);
+
+        for (let i = 0; i < fires.size(); ++i) {
+            const fire = fires.get(i);
+            obj.push({
+                bbox: [fire.x, fire.y, fire.width, fire.height],
+                class: "Fire",
+                score: 1,
+            });
+        }
+
+        for (let i = 0; i < guns.size(); ++i) {
+            const gun = guns.get(i);
+            obj.push({
+                bbox: [gun.x, gun.y, gun.width, gun.height],
+                class: "Gun",
+                score: 1,
+            });
+        }
+    }
+
+    setPredictions(obj);
+
+    // Resource cleanup
+    src.delete();
+    gray.delete();
+    fires.delete();
+    guns.delete();
+
+    // Logging detection data
     const currentTime = Date.now();
     if (currentTime - lastLoggedTime.current >= slowedDetectionIntervalMs) {
-      detectionBuffer.current.push(
-        ...obj.map((prediction) => ({
-          team_id: user?.id || "unknown",
-          date_time: new Date().toISOString(),
-          category: prediction.class,
-          object_confidence: prediction.score,
-        }))
-      );
-      lastLoggedTime.current = currentTime;
+        const detections = obj.map((prediction) => ({
+            team_id: user?.id || "unknown",
+            date_time: new Date().toISOString(),
+            category: prediction.class,
+            object_confidence: prediction.score,
+        }));
+        detectionBuffer.current.push(...detections);
+        lastLoggedTime.current = currentTime;
     }
-  };
+};
 
 
   const sendBatchToSupabase = async (batch) => {
@@ -248,13 +336,13 @@ const ObjectDetection = () => {
 
   useEffect(() => {
     if (isWebcamStarted && modelsLoaded) {
-      runModel(); 
-  
+      runModel();
+
       const batchInterval = setInterval(batchProcess, supabasePostReqIntervalMs);
-  
+
       return () => {
         clearInterval(batchInterval); // Clear batch processing interval
-       
+
       };
     }
   }, [isWebcamStarted]);
@@ -279,7 +367,6 @@ const ObjectDetection = () => {
           setLabeledDescriptors((prev) => [...prev, newDescriptor]);
           console.log("Labeled descriptor added:", name);
           console.log("Labeled descriptors:", labeledDescriptors);
-
         } else {
           alert("Name cannot be empty.");
         }
@@ -288,7 +375,6 @@ const ObjectDetection = () => {
       }
     }
   };
-  
 
   return (
     <div className="w-full flex flex-col items-center justify-center">
@@ -308,20 +394,17 @@ const ObjectDetection = () => {
       <div className="relative">
         {isWebcamStarted ? (
           <div>
-          <video
-            ref={videoRef}
-            // className="w-full h-auto rounded"
-            className="w-full h-full object-cover rounded-lg"
-            autoPlay
-            muted
-            // width="640"
-            // height="480"
-          />
-          {/* Canvas for face detection */}
-          <canvas
-          ref={canvasRef}
-          className="absolute top-0 left-0 w-full h-full"
-        />
+            <video
+              ref={videoRef}
+              className="w-full h-full object-cover rounded-lg"
+              autoPlay
+              muted
+            />
+            {/* Canvas for face detection */}
+            <canvas
+              ref={canvasRef}
+              className="absolute top-0 left-0 w-full h-full"
+            />
           </div>
         ) : (
           <div className="w-full h-auto">Webcam is off</div>
@@ -335,13 +418,13 @@ const ObjectDetection = () => {
                 style={{
                   left: `${prediction.bbox[0]}px`,
                   top: `${prediction.bbox[1]}px`,
-                  width: `${prediction.bbox[2] - 100}px`,
+                  width: `${prediction.bbox[2]}px`,
                 }}
               >
                 {`${prediction.class} - ${Math.round(prediction.score * 100)}% confidence`}
               </p>
               <div
-                className="absolute border border-gradient-to-r from-fuchsia-500 to-cyan-500 rounded-lg"
+                className="absolute border border-black rounded-lg"
                 style={{
                   left: `${prediction.bbox[0]}px`,
                   top: `${prediction.bbox[1]}px`,
