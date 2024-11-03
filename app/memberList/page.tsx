@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/utils/supabase/client"; 
+import { createClient } from "@/utils/supabase/client";
 const supabase = createClient();
 
 interface Member {
@@ -32,7 +32,7 @@ export default function MemberList() {
   const [filteredMembers, setFilteredMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter(); 
+  const router = useRouter();
 
   // Fetch members from Supabase
   useEffect(() => {
@@ -126,17 +126,18 @@ export default function MemberList() {
                 <TableRow
                   key={member.member_id}
                   onClick={() => handleMemberClick(member.member_id)} // Navigate to member's account page on row click
-                  className="cursor-pointer"
-                >
+                  className="cursor-pointer">
                   <TableCell>
                     {member.photo_url ? (
-                      <Image
-                        src={member.photo_url}
-                        alt={`${member.first_name} ${member.last_name}`}
-                        width={64}
-                        height={64}
-                        className="rounded-full"
-                      />
+                      <div className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center">
+                        <Image
+                          src={member.photo_url}
+                          alt={`${member.first_name} ${member.last_name}`}
+                          width={64}
+                          height={64}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                     ) : (
                       <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
                         <span className="text-gray-500 text-lg">
@@ -152,12 +153,12 @@ export default function MemberList() {
                   <TableCell>
                     <Button
                       variant="outline"
-                      size="sm"
+                      size="icon"
+                      className="rounded-full w-12 h-12"
                       onClick={(e) => {
                         e.stopPropagation(); // Prevent triggering row click event
                         handleEditClick(member.member_id);
-                      }}
-                    >
+                      }}>
                       ✏️
                     </Button>
                   </TableCell>
@@ -179,8 +180,7 @@ export default function MemberList() {
         <Button
           variant="outline"
           onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-        >
+          disabled={currentPage === 1}>
           Prev
         </Button>
         <div className="flex space-x-2 mx-4">
@@ -188,17 +188,17 @@ export default function MemberList() {
             <Button
               key={i}
               variant={currentPage === i + 1 ? "default" : "outline"}
-              onClick={() => setCurrentPage(i + 1)}
-            >
+              onClick={() => setCurrentPage(i + 1)}>
               {i + 1}
             </Button>
           ))}
         </div>
         <Button
           variant="outline"
-          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-          disabled={currentPage === totalPages}
-        >
+          onClick={() =>
+            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+          }
+          disabled={currentPage === totalPages}>
           Next
         </Button>
       </div>
