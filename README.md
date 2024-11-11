@@ -5,7 +5,7 @@ An Image Recognition Security System
 ## Features
 
 - Can detect people and objects for security logs.
-- Can register members to be recognized and inform when unknown people are detected.
+- Can register members to be recognized and inform when unknown people are detected..
 
 ## Setup
 
