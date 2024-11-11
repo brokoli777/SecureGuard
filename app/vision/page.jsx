@@ -331,16 +331,16 @@ const ObjectDetection = () => {
             drawBox.draw(canvas);
 
             // Log result for debugging
-            console.log(`Detection ${i + 1} labeled as: ${labelToDisplay}`);
+            console.log(`Detection ${i + 1} labeled as: ${labelToDisplay}, confidence: {confidence}, member_id: ${member_id}`);
 
+            member_id &&
             // Prepare detection data for logging
             detectionsForLogging.push({
               team_id: user?.id || "unknown",
               date_time: new Date().toISOString(),
               category: "person",
-              member_id: member.member_id,
-              label: labelToDisplay,
-              confidence: parseFloat(confidence),
+              member_id: member_id,
+              object_confidence: parseFloat(confidence),
             });
           });
 
