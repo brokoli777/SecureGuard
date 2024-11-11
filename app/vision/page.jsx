@@ -12,7 +12,9 @@ const ObjectDetection = () => {
 
   // Refs
   const videoRef = useRef(null);
-  const canvasRef = useRef(null);
+  const faceCanvasRef = useRef(null);
+  const objectCanvasRef = useRef(null);
+  const labelToMemberIdRef = useRef({});
 
   // State variables
   const [isWebcamStarted, setIsWebcamStarted] = useState(false);
@@ -66,6 +68,8 @@ const ObjectDetection = () => {
           } else {
             console.log("Members data:", membersData);
 
+            const labelToMemberId = {};
+
             const labeledDescriptorsList = membersData.map((member) => {
               const floatArray = Float32Array.from(member.descriptor);
               console.log(
@@ -74,12 +78,25 @@ const ObjectDetection = () => {
                 member.last_name,
                 floatArray
               );
-              return new faceapi.LabeledFaceDescriptors(
-                `${member.first_name} ${member.last_name}` ||
-                  `ID: ${member.member_id}`,
-                [floatArray]
+
+              // Ensure label is correctly assigned and standardized
+              const label =
+                member.first_name && member.last_name
+                  ? `${member.first_name.trim()} ${member.last_name.trim()}`.toLowerCase()
+                  : `id:${member.member_id}`.toLowerCase();
+
+              // Map the label to member_id
+              labelToMemberId[label] = member.member_id;
+
+              console.log(
+                `Assigned label: "${label}" for member_id: ${member.member_id}`
               );
+
+              return new faceapi.LabeledFaceDescriptors(label, [floatArray]);
             });
+
+            // Store the mapping in the ref
+            labelToMemberIdRef.current = labelToMemberId;
 
             setLabeledDescriptors(labeledDescriptorsList);
             console.log(
@@ -212,7 +229,7 @@ const ObjectDetection = () => {
     const runDetection = async () => {
       if (
         videoRef.current &&
-        canvasRef.current &&
+        faceCanvasRef.current &&
         labeledDescriptors.length > 0 &&
         modelsLoaded
       ) {
@@ -222,15 +239,20 @@ const ObjectDetection = () => {
           minConfidence: 0.5,
         });
         const video = videoRef.current;
-        const canvas = canvasRef.current;
+        const canvas = faceCanvasRef.current;
 
-        console.log("Step 2: Detecting faces in the video feed");
-
-        // Ensure the video is ready
-        if (video.readyState < 2) {
+        // Ensure the video is ready and dimensions are available
+        if (
+          video.readyState < 2 ||
+          video.videoWidth === 0 ||
+          video.videoHeight === 0
+        ) {
+          console.log("Video is not ready or dimensions not available yet");
           animationFrameId = requestAnimationFrame(runDetection);
           return;
         }
+
+        console.log("Step 2: Detecting faces in the video feed");
 
         // Detect faces and obtain descriptors
         const detections = await faceapi
@@ -246,49 +268,90 @@ const ObjectDetection = () => {
         };
 
         faceapi.matchDimensions(canvas, displaySize);
-        const resizedDetections = faceapi.resizeResults(detections, displaySize);
 
-        // Clear canvas before drawing new detections
-        const context = canvas.getContext("2d");
-        if (context) {
-          context.clearRect(0, 0, canvas.width, canvas.height);
-        }
-
-        // Draw bounding boxes and landmarks on canvas
-        faceapi.draw.drawDetections(canvas, resizedDetections);
-        faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
-
-        // Set up face matcher
-        const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.6);
-        console.log(
-          "Step 4: Face matcher initialized with labeled descriptors:",
-          labeledDescriptors
-        );
-
-        // Label each detection based on descriptors
-        resizedDetections.forEach((detection, i) => {
-          const result = faceMatcher.findBestMatch(detection.descriptor);
-          const box = detection.detection.box;
-          const { label, distance } = result;
-
-          // Confidence check and label display
-          const confidence = (1 - distance).toFixed(2);
-          const labelToDisplay = label === "unknown" ? "Unknown Person" : label;
-
-          console.log(
-            `Step 5: Detection ${i + 1}: Label - ${labelToDisplay}, Confidence - ${confidence}`
+        // Ensure detections is not undefined
+        if (detections) {
+          const resizedDetections = faceapi.resizeResults(
+            detections,
+            displaySize
           );
 
-          // Draw bounding box with label
-          const drawBox = new faceapi.draw.DrawBox(box, {
-            label: `${labelToDisplay} (${confidence})`,
-            boxColor: "green",
-          });
-          drawBox.draw(canvas);
+          // Clear canvas before drawing new detections
+          const context = canvas.getContext("2d");
+          if (context) {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+          }
 
-          // Log result for debugging
-          console.log(`Detection ${i + 1} labeled as: ${labelToDisplay}`);
-        });
+          // Draw bounding boxes and landmarks on canvas
+          faceapi.draw.drawDetections(canvas, resizedDetections);
+          faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+
+          // Set up face matcher
+          const faceMatcher = new faceapi.FaceMatcher(
+            labeledDescriptors,
+            0.6
+          );
+          console.log(
+            "Step 4: Face matcher initialized with labeled descriptors:",
+            labeledDescriptors
+          );
+
+          const detectionsForLogging = []; // Collect detections for logging
+
+          // Label each detection based on descriptors
+          resizedDetections.forEach((detection, i) => {
+            const result = faceMatcher.findBestMatch(detection.descriptor);
+            const box = detection.detection.box;
+            const { label: detectedLabel, distance } = result;
+
+            // Standardize label
+            const label = detectedLabel.toLowerCase().trim();
+
+            // Retrieve member_id using the label
+            const member_id = labelToMemberIdRef.current[label] || null;
+
+            // Debug logs
+            console.log(`Label from face matcher: "${label}"`);
+            console.log(`Retrieved member_id: ${member_id}`);
+
+            // Confidence check and label display
+            const confidence = (1 - distance).toFixed(2);
+            const labelToDisplay =
+              label === "unknown" ? "Unknown Person" : label;
+
+            console.log(
+              `Step 5: Detection ${i + 1}: Label - ${labelToDisplay}, Confidence - ${confidence}`
+            );
+
+            // Draw bounding box with label
+            const drawBox = new faceapi.draw.DrawBox(box, {
+              label: `${labelToDisplay} (${confidence})`,
+              boxColor: "green",
+            });
+            drawBox.draw(canvas);
+
+            // Log result for debugging
+            console.log(`Detection ${i + 1} labeled as: ${labelToDisplay}`);
+
+            // Prepare detection data for logging
+            detectionsForLogging.push({
+              team_id: user?.id || "unknown",
+              date_time: new Date().toISOString(),
+              category: "person",
+              member_id: member.member_id,
+              label: labelToDisplay,
+              confidence: parseFloat(confidence),
+            });
+          });
+
+          // Logging detection data
+          if (detectionsForLogging.length > 0) {
+            console.log("Detections for logging:", detectionsForLogging);
+            detectionBuffer.current.push(...detectionsForLogging);
+          }
+        } else {
+          console.log("No detections to process");
+        }
       } else {
         console.log(
           "Skipping detection: Either video, canvas, descriptors, or models are not ready."
@@ -312,7 +375,7 @@ const ObjectDetection = () => {
 
   const detect = async (net) => {
     const video = videoRef.current;
-    const canvas = canvasRef.current;
+    const canvas = objectCanvasRef.current;
 
     if (!video || !canvas || video.readyState < 4 || !isWebcamStarted) return;
 
@@ -375,25 +438,40 @@ const ObjectDetection = () => {
     guns.delete();
 
     // Logging detection data
-    const currentTime = Date.now();
-    if (currentTime - lastLoggedTime.current >= slowedDetectionIntervalMs) {
+    if (obj.length > 0) {
       const detections = obj.map((prediction) => ({
         team_id: user?.id || "unknown",
         date_time: new Date().toISOString(),
         category: prediction.class,
         object_confidence: prediction.score,
       }));
+      console.log("Object detections for logging:", detections);
       detectionBuffer.current.push(...detections);
-      lastLoggedTime.current = currentTime;
     }
   };
 
   const sendBatchToSupabase = async (batch) => {
-    console.log("Sending batch to Supabase:", batch);
+    // Clean up batch data to remove member_id from non-person detections
+    const cleanedBatch = batch.map((detection) => {
+      if (detection.category !== "person") {
+        // Remove member_id if it's not a person detection
+        const { member_id, ...rest } = detection;
+        return rest;
+      }
+      // Ensure member_id is included (could be null) for person detections
+      return {
+        ...detection,
+        member_id: detection.member_id ?? null, // Explicitly set to null if undefined
+      };
+    });
+
+    console.log("Sending batch to Supabase:", cleanedBatch);
     try {
-      const { error } = await supabase.from("events").insert(batch);
+      const { data, error } = await supabase.from("events").insert(cleanedBatch);
       if (error) {
         console.error("Error inserting batch to Supabase:", error);
+      } else {
+        console.log("Data successfully inserted to Supabase:", data);
       }
     } catch (err) {
       console.error("Error sending request to Supabase:", err);
@@ -402,6 +480,10 @@ const ObjectDetection = () => {
 
   const batchProcess = () => {
     if (detectionBuffer.current.length > 0) {
+      console.log(
+        "Batch data before sending to Supabase:",
+        detectionBuffer.current
+      );
       sendBatchToSupabase(detectionBuffer.current);
       detectionBuffer.current = []; // Clear buffer after sending
     }
@@ -418,35 +500,6 @@ const ObjectDetection = () => {
       };
     }
   }, [isWebcamStarted, modelsLoaded]);
-
-  // Handle image upload and create labeled descriptors
-  const handleImageUpload = async (event) => {
-    console.log("Image uploaded");
-    const imageFile = event.target.files?.[0];
-    if (imageFile && modelsLoaded) {
-      const img = await faceapi.bufferToImage(imageFile);
-      const detections = await faceapi
-        .detectSingleFace(img)
-        .withFaceLandmarks()
-        .withFaceDescriptor();
-
-      if (detections) {
-        const name = prompt("Enter the name of the person:");
-        if (name) {
-          const newDescriptor = new faceapi.LabeledFaceDescriptors(name, [
-            detections.descriptor,
-          ]);
-          setLabeledDescriptors((prev) => [...prev, newDescriptor]);
-          console.log("Labeled descriptor added:", name);
-          console.log("Labeled descriptors:", labeledDescriptors);
-        } else {
-          alert("Name cannot be empty.");
-        }
-      } else {
-        alert("No face detected in the image. Please try another image.");
-      }
-    }
-  };
 
   return (
     <div className="w-full flex flex-col items-center justify-center">
@@ -472,16 +525,24 @@ const ObjectDetection = () => {
               autoPlay
               muted
             />
+            {/* Canvas for object detection */}
+            <canvas
+              ref={objectCanvasRef}
+              className="absolute top-0 left-0 w-full h-full"
+              style={{ pointerEvents: "none", zIndex: 2 }}
+            />
             {/* Canvas for face detection */}
             <canvas
-              ref={canvasRef}
+              ref={faceCanvasRef}
               className="absolute top-0 left-0 w-full h-full"
+              style={{ pointerEvents: "none", zIndex: 3 }}
             />
           </div>
         ) : (
           <div className="w-full h-auto">Webcam is off</div>
         )}
 
+        {/* Object detection labels (if any) */}
         {predictions.length > 0 &&
           predictions.map((prediction, index) => (
             <div key={index}>
@@ -491,6 +552,7 @@ const ObjectDetection = () => {
                   left: `${prediction.bbox[0]}px`,
                   top: `${prediction.bbox[1]}px`,
                   width: `${prediction.bbox[2]}px`,
+                  zIndex: 4,
                 }}
               >
                 {`${prediction.class} - ${Math.round(
@@ -504,22 +566,11 @@ const ObjectDetection = () => {
                   top: `${prediction.bbox[1]}px`,
                   width: `${prediction.bbox[2]}px`,
                   height: `${prediction.bbox[3]}px`,
+                  zIndex: 4,
                 }}
               />
             </div>
           ))}
-      </div>
-
-      <h3 className="text-xl font-medium mt-6 text-center">
-        Upload an Image to Add a Person
-      </h3>
-      <div className="flex justify-center mt-4">
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleImageUpload}
-          className="px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
       </div>
     </div>
   );
