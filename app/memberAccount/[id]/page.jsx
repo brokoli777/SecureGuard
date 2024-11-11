@@ -4,14 +4,16 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
+import EventTable from "@/components/EventTable"; // Assuming you have an EventTable component
 
 const supabase = createClient();
 
 export default function MemberDetailsPage() {
-  const { id } = useParams(); 
+  const { id } = useParams();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [memberData, setMemberData] = useState<any>(null);
+  const [memberData, setMemberData] = useState(null);
+  const [eventLogs, setEventLogs] = useState([]);
 
   // Fetch member details by member_id
   useEffect(() => {
@@ -21,7 +23,7 @@ export default function MemberDetailsPage() {
       const { data, error } = await supabase
         .from("members")
         .select("*")
-        .eq("member_id", id) 
+        .eq("member_id", id)
         .single();
 
       if (error) {
@@ -35,6 +37,26 @@ export default function MemberDetailsPage() {
     fetchMemberDetails();
   }, [id]);
 
+  // Fetch event logs associated with the member
+  useEffect(() => {
+    const fetchEventLogs = async () => {
+      if (!id) return;
+
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .eq("member_id", id); // Adjust this if the logs are associated by a different field, like team_id
+
+      if (error) {
+        console.error("Error fetching event logs:", error);
+      } else {
+        setEventLogs(data);
+      }
+    };
+
+    fetchEventLogs();
+  }, [id]);
+
   if (loading) {
     return <p>Loading member data...</p>;
   }
@@ -46,7 +68,7 @@ export default function MemberDetailsPage() {
     <div className="container mx-auto p-6">
       {/* Main Card Layout */}
       <div className="flex justify-center">
-        <div className=" p-6 rounded-lg shadow-lg w-full max-w-4xl flex">
+        <div className="p-6 rounded-lg shadow-lg w-full max-w-4xl flex">
           
           {/* Left side: Profile Image and Log History Button */}
           <div className="w-1/3 flex flex-col justify-center items-center">
@@ -104,6 +126,16 @@ export default function MemberDetailsPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Event Logs Table */}
+      <div className="mt-8">
+        <h3 className="text-2xl font-semibold mb-4">Event Logs for {fullName}</h3>
+        {eventLogs.length > 0 ? (
+          <EventTable data={eventLogs} /> // Display the event logs using EventTable component
+        ) : (
+          <p>No event logs found for this member.</p>
+        )}
       </div>
     </div>
   );
