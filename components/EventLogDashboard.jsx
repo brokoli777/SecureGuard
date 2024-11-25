@@ -1,21 +1,20 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-export default function EventLogDashboard({ onSearch, onDateFilter, onCategoryFilter }) {
+export default function EventLogDashboard({
+  onSearch,
+  onDateFilter,
+  onCategoryFilter,
+}) {
   return (
-    <div>
-      <h2 className="text-2xl font-semibold mb-4 text-center">Event Logs</h2>
-
-
-      {/* Search Input */}
-      <div className="mb-4">
-        <Input
-          type="text"
-          placeholder="Search By Category"
-          className="w-full mb-4"
-          onChange={(e) => onSearch(e.target.value)} // Trigger search on input change
-        />
-      </div>
+    <div className="mb-4">
+      {/* Search input */}
+      <Input
+        type="text"
+        placeholder="Search By Category"
+        className="w-full mb-4"
+        onChange={(e) => onSearch(e.target.value)} // Trigger search on input change
+      />
 
       {/* Filters */}
       <div className="flex items-center mb-4 space-x-4">
@@ -30,35 +29,15 @@ export default function EventLogDashboard({ onSearch, onDateFilter, onCategoryFi
         />
 
         {/* Filter Buttons */}
-        <div className="flex space-x-2">
-          <Button
-            variant="outline"
-            className="bg-blue-900 text-white w-32"
-            onClick={() => onCategoryFilter('person')} // Filter by "Person" category
-          >
-            Person
-          </Button>
-          <Button
-            variant="outline"
-            className="bg-blue-900 text-white w-32"
-            onClick={() => onCategoryFilter('Fire')} // Filter by "Fire" category
-          >
-            Fire
-          </Button>
-          <Button
-            variant="outline"
-            className="bg-blue-900 text-white w-32"
-            onClick={() => onCategoryFilter('Weapon')} // Filter by "Weapon" category
-          >
-            Weapon
-          </Button>
-          <Button
-            variant="outline"
-            className="bg-blue-900 text-white w-32"
-            onClick={() => onCategoryFilter('Unrecognized')} // Filter by "Unrecognized" category
-          >
-            Unrecognized
-          </Button>
+        <div className="flex gap-3">
+          {["Person", "Fire", "Weapon", "Unrecognized"].map((category) => (
+            <Button
+              key={category}
+              className="bg-[#1e40af] hover:bg-[#1e3a8a]  text-white w-[140px]"
+              onClick={() => onCategoryFilter(category.toLowerCase())}>
+              {category}
+            </Button>
+          ))}
         </div>
       </div>
     </div>
