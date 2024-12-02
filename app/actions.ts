@@ -34,7 +34,7 @@ export const signUpAction = async (formData: FormData) => {
     // );
     // return redirect("/protected");
     //Go to event logs page with signup success message
-    return redirect("/event-log");
+    return redirect("/intro");
   }
 };
 
