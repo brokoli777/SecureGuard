@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 const ITEMS_PER_PAGE = 15; // Number of items per page
 
-export default function EventTable({ data }) {
+export default function EventTable({ data, hideMemberColumn }) {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Calculate the index range for the current page
@@ -32,6 +32,7 @@ export default function EventTable({ data }) {
           <TableRow>
             <TableHead>ID</TableHead>
             <TableHead>Category</TableHead>
+           {!hideMemberColumn &&  <TableHead>Member</TableHead>}
             <TableHead>Date</TableHead>
             <TableHead>Time</TableHead>
             <TableHead>Team ID</TableHead>
@@ -43,6 +44,7 @@ export default function EventTable({ data }) {
             <TableRow key={event.event_id}>
               <TableCell>{event.event_id}</TableCell>
               <TableCell>{event.category}</TableCell>
+              {!hideMemberColumn && <TableCell>{event.member_name}</TableCell>}
               <TableCell>{new Date(event.date_time).toLocaleDateString()}</TableCell>
               <TableCell>{new Date(event.date_time).toLocaleTimeString()}</TableCell>
               <TableCell>{event.team_id}</TableCell>
