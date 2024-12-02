@@ -86,29 +86,29 @@ export default function TestEventsPage() {
   };
 
   // Handle category filter
-  const handleCategoryFilter = (category) => {
+  const handleCategoryFilter = (category, memberName) => {
     setSelectedCategory(category);
-    filterEvents(searchTerm, filterDate, category);
+    filterEvents(searchTerm, filterDate, category, memberName);
   };
 
-  // Function to filter events based on the search term, date, and category
-  const filterEvents = (searchTerm, filterDate, selectedCategory) => {
+  // Function to filter events based on the search term, date, category, and member name
+  const filterEvents = (searchTerm, filterDate, selectedCategory, selectedMemberName) => {
     let filtered = events;
 
-    // Filter by search term
+    // Filter by search term (category, team_id, or member_name)
     if (searchTerm) {
       filtered = filtered.filter(
         (event) =>
           event.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          event.team_id.toLowerCase().includes(searchTerm.toLowerCase())
+          event.team_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (membersMap[event.member_id] && membersMap[event.member_id].toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
     // Filter by date
     if (filterDate) {
-      filtered = filtered.filter((event) => {
-        // Extract event date and format it as YYYY-MM-DD
-        const eventDate = new Date(event.date_time).toISOString().split("T")[0];
+      filtered = filtered.filter(event => {
+        const eventDate = new Date(event.date_time).toISOString().split('T')[0];
         return eventDate === filterDate;
       });
     }
@@ -116,10 +116,35 @@ export default function TestEventsPage() {
     // Filter by category
     if (selectedCategory) {
       filtered = filtered.filter(
-        (event) => event.category === selectedCategory
+        (event) => event.category.toLowerCase() === selectedCategory.toLowerCase()
       );
     }
+
+    // Filter by member name if it's "N/A" (for Unrecognized filter) or null member_id
+    if (selectedMemberName === "N/A" || selectedMemberName === null) {
+      filtered = filtered.filter(
+        (event) => !event.member_id || membersMap[event.member_id] === "N/A"
+      );
+    }
+
     setFilteredEvents(filtered);
+  };
+
+  // Add member names to events data
+  const eventsWithMemberNames = filteredEvents.map((event) => ({
+    ...event,
+    member_name: event.member_id ? membersMap[event.member_id] : "N/A", // Set "N/A" if member_id is null
+  }));
+
+  // Row class name logic: Highlight the row if the member is unrecognized or category is "person"
+  const getRowClassName = (event) => {
+    if (
+      event.category === "person" &&
+      (!event.member_id || membersMap[event.member_id] === "N/A")
+    ) {
+      return "bg-amber-600 text-white"; // Highlight in red with white text
+    }
+    return "";
   };
 
   if (loading) {
@@ -129,12 +154,6 @@ export default function TestEventsPage() {
   if (error) {
     return <div>Error: {error}</div>;
   }
-
-  // Add member names to events data
-  const eventsWithMemberNames = filteredEvents.map((event) => ({
-    ...event,
-    member_name: membersMap[event.member_id] || "N/A",
-  }));
 
   return (
     <div>
@@ -154,11 +173,18 @@ export default function TestEventsPage() {
 
         {eventsWithMemberNames.length === 0 ? (
           <p>No events found for the current user.</p>
-
         ) : (
-          <EventTable data={eventsWithMemberNames} /> // Pass modified events data with member names
+          <EventTable
+            data={eventsWithMemberNames}
+            hideMemberColumn={false} // Assuming you want to display the member column
+            filterDate={filterDate}
+            selectedMemberName={searchTerm}
+            membersMap={membersMap}
+            getRowClassName={getRowClassName} // Pass the getRowClassName function
+          />
         )}
       </div>
     </div>
   );
 }
+

@@ -33,8 +33,20 @@ export default function EventLogDashboard({
           {["Person", "Fire", "Weapon", "Unrecognized"].map((category) => (
             <Button
               key={category}
-              className="bg-[#1e40af] hover:bg-[#1e3a8a]  text-white w-[140px]"
-              onClick={() => onCategoryFilter(category.toLowerCase())}>
+              className="bg-[#1e40af] hover:bg-[#1e3a8a] text-white w-[140px]"
+              onClick={() => {
+                if (category === "Weapon") {
+                  onCategoryFilter("Gun"); // 'Weapon' button filters for 'Gun'
+                } else if (category === "Fire") {
+                  onCategoryFilter("Fire"); // 'Fire' button filters for 'Fire'
+                } else if (category === "Unrecognized") {
+                  // 'Unrecognized' button filters for 'Person' category and member_name 'N/A'
+                  onCategoryFilter("person", "N/A");
+                } else {
+                  onCategoryFilter(category.toLowerCase()); // Other categories as-is (Person)
+                }
+              }}
+            >
               {category}
             </Button>
           ))}
