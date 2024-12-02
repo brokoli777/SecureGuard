@@ -32,7 +32,7 @@ export default async function NavBar() {
             <NavigationMenuList>
               <NavigationMenuItem>
                 <NavigationMenuTrigger className="hover:underline">
-                  Company
+                  Info
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="p-4 bg-background rounded-md shadow-lg">
@@ -40,7 +40,8 @@ export default async function NavBar() {
                       <NavigationMenuLink asChild>
                         <Link
                           href="/about"
-                          className="block px-4 py-2 hover:bg-accent rounded">
+                          className="block px-4 py-2 hover:bg-accent rounded"
+                        >
                           About
                         </Link>
                       </NavigationMenuLink>
@@ -49,17 +50,30 @@ export default async function NavBar() {
                       <NavigationMenuLink asChild>
                         <Link
                           href="/contact"
-                          className="block px-4 py-2 hover:bg-accent rounded">
+                          className="block px-4 py-2 hover:bg-accent rounded"
+                        >
                           Contact
+                        </Link>
+                      </NavigationMenuLink>
+                    </li>
+                    <hr/>
+                    <li>
+                      <NavigationMenuLink asChild>
+                        <Link
+                          href="/object-detection"
+                          className="block px-4 py-2 hover:bg-accent rounded"
+                        >
+                          Object Detection
                         </Link>
                       </NavigationMenuLink>
                     </li>
                     <li>
                       <NavigationMenuLink asChild>
                         <Link
-                          href="/editUser"
-                          className="block px-4 py-2 hover:bg-accent rounded">
-                          Edit Profile
+                          href="/facial-recognition"
+                          className="block px-4 py-2 hover:bg-accent rounded"
+                        >
+                          Facial Recognition
                         </Link>
                       </NavigationMenuLink>
                     </li>
@@ -78,58 +92,22 @@ export default async function NavBar() {
                 Members
               </Link>
 
-              {/* System Features Dropdown */}
-              <NavigationMenu>
-                <NavigationMenuList>
-                  <NavigationMenuItem>
-                    <NavigationMenuTrigger className="hover:underline">
-                      System Features
-                    </NavigationMenuTrigger>
-                    <NavigationMenuContent>
-                      <ul className="p-4 bg-background rounded-md shadow-lg">
-                        <li>
-                          <NavigationMenuLink asChild>
-                            <Link
-                              href="/event-log"
-                              className="block px-4 py-2 hover:bg-accent rounded">
-                              Event Logs
-                            </Link>
-                          </NavigationMenuLink>
-                        </li>
-                        <li>
-                          <NavigationMenuLink asChild>
-                            <Link
-                              href="/object-detection"
-                              className="block px-4 py-2 hover:bg-accent rounded">
-                              Object Detection
-                            </Link>
-                          </NavigationMenuLink>
-                        </li>
-                        <li>
-                          <NavigationMenuLink asChild>
-                            <Link
-                              href="/vision"
-                              className="block px-4 py-2 hover:bg-accent rounded">
-                              Vision
-                            </Link>
-                          </NavigationMenuLink>
-                        </li>
-                        <li>
-                          <NavigationMenuLink asChild>
-                            <Link
-                              href="/facial-recognition"
-                              className="block px-4 py-2 hover:bg-accent rounded">
-                              Facial Recognition
-                            </Link>
-                          </NavigationMenuLink>
-                        </li>
-                      </ul>
-                    </NavigationMenuContent>
-                  </NavigationMenuItem>
-                </NavigationMenuList>
-                <NavigationMenuIndicator />
-                <NavigationMenuViewport />
-              </NavigationMenu>
+              {/* Event logs */}
+              <Link href="/event-log" className="hover:underline">
+                Event Logs
+              </Link>
+
+              {/* Vision */}
+              <Link href="/vision" className="hover:underline">
+                Vision
+              </Link>
+
+              {/* Edit Profile */}
+              <Link href="/editUser" className="hover:underline">
+                Edit Profile
+              </Link>
+
+             
             </>
           )}
         </div>

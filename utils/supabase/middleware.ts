@@ -47,10 +47,8 @@ export const updateSession = async (request: NextRequest) => {
       "/editMember",
       "/editUser",
       "/event-log",
-      "/facial-recognition",
       "/memberAccount",
       "/newMember",
-      "/object-detection",
       "/vision",
     ];
 
