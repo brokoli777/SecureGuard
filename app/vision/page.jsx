@@ -176,7 +176,7 @@ const ObjectDetection = () => {
     try {
       // Fetch the Haar cascade XML files
       const fireResponse = await fetch("/haarcascade_fire.xml");
-      const gunResponse = await fetch("/haarcascade_gun.xml");
+      const gunResponse = await fetch("/cascadef2.xml");
 
       if (!fireResponse.ok || !gunResponse.ok) {
         throw new Error("Failed to fetch Haar cascade XML files");
@@ -199,7 +199,7 @@ const ObjectDetection = () => {
       );
       cv.FS_createDataFile(
         "/",
-        "haarcascade_gun.xml",
+        "cascadef2.xml",
         new Uint8Array(gunBuffer),
         true,
         false,
@@ -215,7 +215,7 @@ const ObjectDetection = () => {
         console.log("Haar Cascade loaded successfully for fire detection");
       }
 
-      if (!gunClassifier.current.load("/haarcascade_gun.xml")) {
+      if (!gunClassifier.current.load("/cascadef2.xml")) {
         console.error("Error loading Haar Cascade XML file for gun detection.");
       } else {
         console.log("Haar Cascade loaded successfully for gun detection");
@@ -228,6 +228,10 @@ const ObjectDetection = () => {
   useEffect(() => {
     let animationFrameId;
     const runDetection = async () => {
+      if (!isWebcamStarted) {
+        console.log("Webcam is stopped, stopping detection loop");
+        return; // Exit the function if webcam is stopped
+      }
       if (
         videoRef.current &&
         faceCanvasRef.current &&
@@ -255,6 +259,7 @@ const ObjectDetection = () => {
 
         console.log("Step 2: Detecting faces in the video feed");
 
+
         // Detect faces and obtain descriptors
         const detections = await faceapi
           .detectAllFaces(video, options)
@@ -268,6 +273,17 @@ const ObjectDetection = () => {
           height: video.videoHeight,
         };
 
+         // Ensure displaySize is valid
+        if (displaySize.width === 0 || displaySize.height === 0) {
+          console.log("Invalid displaySize dimensions");
+          // Schedule the next frame only if webcam is started
+          if (isWebcamStarted) {
+            animationFrameId = requestAnimationFrame(runDetection);
+          }
+          return;
+        }
+
+      
         faceapi.matchDimensions(canvas, displaySize);
 
         // Ensure detections is not undefined
@@ -340,7 +356,6 @@ const ObjectDetection = () => {
               date_time: new Date().toISOString(),
               category: "person",
               member_id: member_id,
-             
               object_confidence: parseFloat(confidence),
             });
           });
@@ -358,8 +373,14 @@ const ObjectDetection = () => {
           "Skipping detection: Either video, canvas, descriptors, or models are not ready."
         );
       }
-      animationFrameId = requestAnimationFrame(runDetection);
+
+      // Schedule the next frame only if webcam is started
+
+      if (isWebcamStarted) {
+        animationFrameId = requestAnimationFrame(runDetection);
+      }
     };
+
 
     if (isWebcamStarted) {
       console.log("Starting detection loop");
@@ -377,40 +398,45 @@ const ObjectDetection = () => {
   const detect = async (net) => {
     const video = videoRef.current;
     const canvas = objectCanvasRef.current;
-
+  
     if (!video || !canvas || video.readyState < 4 || !isWebcamStarted) return;
-
+  
     // Set video dimensions once
     const videoWidth = video.videoWidth;
     const videoHeight = video.videoHeight;
-
+  
     video.width = videoWidth;
     video.height = videoHeight;
-
+  
     // Make object detections
     const obj = await net.detect(video);
     console.log("Detected objects:", obj);
-
+  
     const context = canvas.getContext("2d");
     if (!context) return;
-
+  
     const src = new cv.Mat(videoHeight, videoWidth, cv.CV_8UC4);
     const gray = new cv.Mat();
     const fires = new cv.RectVector();
     const guns = new cv.RectVector();
-
+  
     if (fireClassifier.current && gunClassifier.current) {
       const cap = new cv.VideoCapture(video);
       cap.read(src);
       cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+  
+      
+      fireClassifier.current.detectMultiScale(gray, fires, 1.3, 18, 0);
+      gunClassifier.current.detectMultiScale(gray, guns, 1.2, 6, 0);
 
-      fireClassifier.current.detectMultiScale(gray, fires, 1.1, 12, 0);
-      gunClassifier.current.detectMultiScale(gray, guns, 1.3, 20, 0);
-
+      
+      //fireClassifier.current.detectMultiScale(gray, fires, 1.1, 12, 0);
+      //gunClassifier.current.detectMultiScale(gray, guns, 1.3, 20, 0);
+  
       context.clearRect(0, 0, canvas.width, canvas.height);
       console.log(`${fires.size()} Fires(s) detected`);
       console.log(`${guns.size()} Gun(s) detected`);
-
+  
       for (let i = 0; i < fires.size(); ++i) {
         const fire = fires.get(i);
         obj.push({
@@ -419,7 +445,7 @@ const ObjectDetection = () => {
           score: 1,
         });
       }
-
+  
       for (let i = 0; i < guns.size(); ++i) {
         const gun = guns.get(i);
         obj.push({
@@ -429,29 +455,39 @@ const ObjectDetection = () => {
         });
       }
     }
-
-    setPredictions(obj);
-
+  
+    // (Optional) Exclude person detections from display
+    setPredictions(obj.filter((prediction) => prediction.class !== "person"));
+  
     // Resource cleanup
     src.delete();
     gray.delete();
     fires.delete();
     guns.delete();
-
+  
     // Logging detection data
     const currentTime = Date.now();
-    if (obj.length > 0 && currentTime - lastLoggedTime.current >= slowedDetectionIntervalMs) {
-      const detections = obj.map((prediction) => ({
-        team_id: user?.id || "unknown",
-        date_time: new Date().toISOString(),
-        category: prediction.class,
-        object_confidence: prediction.score,
-      }));
-      console.log("Object detections for logging:", detections);
-      detectionBuffer.current.push(...detections);
-      lastLoggedTime.current = currentTime;
+    if (
+      obj.length > 0 &&
+      currentTime - lastLoggedTime.current >= slowedDetectionIntervalMs
+    ) {
+      const detections = obj
+        .filter((prediction) => prediction.class !== "person") // Exclude person detections
+        .map((prediction) => ({
+          team_id: user?.id || "unknown",
+          date_time: new Date().toISOString(),
+          category: prediction.class,
+          object_confidence: prediction.score,
+        }));
+  
+      if (detections.length > 0) {
+        console.log("Object detections for logging:", detections);
+        detectionBuffer.current.push(...detections);
+        lastLoggedTime.current = currentTime;
+      }
     }
   };
+  
 
   const sendBatchToSupabase = async (batch) => {
     // Clean up batch data to remove member_id from non-person detections
