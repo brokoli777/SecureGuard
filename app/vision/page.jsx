@@ -7,7 +7,6 @@ import "@tensorflow/tfjs";
 import * as faceapi from "face-api.js";
 import cv from "opencv.js";
 
-
 const ObjectDetection = () => {
   console.log("ObjectDetection component is rendering");
 
@@ -112,7 +111,7 @@ const ObjectDetection = () => {
         console.error("Error fetching user or descriptors:", error);
       }
     };
-
+    
     getUser();
   }, [supabase]);
 
@@ -227,6 +226,7 @@ const ObjectDetection = () => {
 
   useEffect(() => {
     let animationFrameId;
+  
     const runDetection = async () => {
       if (!isWebcamStarted) {
         console.log("Webcam is stopped, stopping detection loop");
@@ -235,17 +235,16 @@ const ObjectDetection = () => {
       if (
         videoRef.current &&
         faceCanvasRef.current &&
-        labeledDescriptors.length > 0 &&
         modelsLoaded
       ) {
         console.log("Step 1: Starting face detection");
-
+  
         const options = new faceapi.SsdMobilenetv1Options({
           minConfidence: 0.5,
         });
         const video = videoRef.current;
         const canvas = faceCanvasRef.current;
-
+  
         // Ensure the video is ready and dimensions are available
         if (
           video.readyState < 2 ||
@@ -256,110 +255,118 @@ const ObjectDetection = () => {
           animationFrameId = requestAnimationFrame(runDetection);
           return;
         }
-
+  
         console.log("Step 2: Detecting faces in the video feed");
-
-
+  
         // Detect faces and obtain descriptors
         const detections = await faceapi
           .detectAllFaces(video, options)
           .withFaceLandmarks()
           .withFaceDescriptors();
-
+  
         console.log("Step 3: Face detections obtained:", detections);
-
+  
         const displaySize = {
           width: video.videoWidth,
           height: video.videoHeight,
         };
-
-         // Ensure displaySize is valid
+  
+        // Ensure displaySize is valid
         if (displaySize.width === 0 || displaySize.height === 0) {
           console.log("Invalid displaySize dimensions");
-          // Schedule the next frame only if webcam is started
           if (isWebcamStarted) {
             animationFrameId = requestAnimationFrame(runDetection);
           }
           return;
         }
-
-      
+  
         faceapi.matchDimensions(canvas, displaySize);
-
-        // Ensure detections is not undefined
+  
         if (detections) {
           const resizedDetections = faceapi.resizeResults(
             detections,
             displaySize
           );
-
+  
           // Clear canvas before drawing new detections
           const context = canvas.getContext("2d");
           if (context) {
             context.clearRect(0, 0, canvas.width, canvas.height);
           }
-
+  
           // Draw bounding boxes and landmarks on canvas
           faceapi.draw.drawDetections(canvas, resizedDetections);
           faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
-
-          // Set up face matcher
-          const faceMatcher = new faceapi.FaceMatcher(
-            labeledDescriptors,
-            0.6
-          );
-          console.log(
-            "Step 4: Face matcher initialized with labeled descriptors:",
-            labeledDescriptors
-          );
-
+  
           const detectionsForLogging = []; // Collect detections for logging
-
-          // Label each detection based on descriptors
-          resizedDetections.forEach((detection, i) => {
-            const result = faceMatcher.findBestMatch(detection.descriptor);
-            const box = detection.detection.box;
-            const { label: detectedLabel, distance } = result;
-
-            // Standardize label
-            const label = detectedLabel.toLowerCase().trim();
-
-            // Retrieve member_id using the label
-            const member_id = labelToMemberIdRef.current[label] || null;
-
-            // Debug logs
-            console.log(`Label from face matcher: "${label}"`);
-            console.log(`Retrieved member_id: ${member_id}`);
-
-            // Confidence check and label display
-            const confidence = (1 - distance).toFixed(2);
-            const labelToDisplay =
-              label === "unknown" ? "Unknown Person" : label;
-
-            console.log(
-              `Step 5: Detection ${i + 1}: Label - ${labelToDisplay}, Confidence - ${confidence}`
+  
+          if (labeledDescriptors.length > 0) {
+            // Set up face matcher when there are labeled descriptors
+            const faceMatcher = new faceapi.FaceMatcher(
+              labeledDescriptors,
+              0.6
             );
-
-            // Draw bounding box with label
-            const drawBox = new faceapi.draw.DrawBox(box, {
-              label: `${labelToDisplay} (${confidence})`,
-              boxColor: "green",
+            console.log(
+              "Face matcher initialized with labeled descriptors:",
+              labeledDescriptors
+            );
+  
+            // Label each detection based on descriptors
+            resizedDetections.forEach((detection, i) => {
+              const result = faceMatcher.findBestMatch(detection.descriptor);
+              const box = detection.detection.box;
+              const { label: detectedLabel, distance } = result;
+  
+              // Standardize label
+              const label = detectedLabel.toLowerCase().trim();
+  
+              // Retrieve member_id using the label
+              const member_id = labelToMemberIdRef.current[label] || null;
+  
+              // Confidence check and label display
+              const confidence = (1 - distance).toFixed(2);
+              const labelToDisplay =
+                label === "unknown" ? "Unknown Person" : label;
+  
+              // Draw bounding box with label
+              const drawBox = new faceapi.draw.DrawBox(box, {
+                label: `${labelToDisplay} (${confidence})`,
+                boxColor: "green",
+              });
+              drawBox.draw(canvas);
+  
+              // Prepare detection data for logging
+              detectionsForLogging.push({
+                team_id: user?.id || "unknown",
+                date_time: new Date().toISOString(),
+                category: "person",
+                member_id: member_id,
+                object_confidence: parseFloat(confidence),
+              });
             });
-            drawBox.draw(canvas);
-
-            // Log result for debugging
-            console.log(`Detection ${i + 1} labeled as: ${labelToDisplay}`);
-
-            // Prepare detection data for logging
-            detectionsForLogging.push({
-              team_id: user?.id || "unknown",
-              date_time: new Date().toISOString(),
-              category: "person",
-              member_id: member_id,
-              object_confidence: parseFloat(confidence),
+          } else {
+            // No labeled descriptors, label all faces as "Unknown Person"
+            resizedDetections.forEach((detection, i) => {
+              const box = detection.detection.box;
+  
+              // Draw bounding box with label
+              const drawBox = new faceapi.draw.DrawBox(box, {
+                label: `Unknown Person`,
+                boxColor: "green",
+              });
+              drawBox.draw(canvas);
+  
+              // Prepare detection data for logging
+              detectionsForLogging.push({
+                team_id: user?.id || "unknown",
+                date_time: new Date().toISOString(),
+                category: "person",
+                member_id: null, // No member_id since it's unknown
+                object_confidence: null, // Confidence is not applicable here
+              });
             });
-          });
-
+          }
+  
           // Logging detection data
           if (detectionsForLogging.length > 0) {
             console.log("Detections for logging:", detectionsForLogging);
@@ -370,30 +377,29 @@ const ObjectDetection = () => {
         }
       } else {
         console.log(
-          "Skipping detection: Either video, canvas, descriptors, or models are not ready."
+          "Skipping detection: Either video, canvas, or models are not ready."
         );
       }
-
+  
       // Schedule the next frame only if webcam is started
-
       if (isWebcamStarted) {
         animationFrameId = requestAnimationFrame(runDetection);
       }
     };
-
-
+  
     if (isWebcamStarted) {
       console.log("Starting detection loop");
       runDetection();
     }
-
+  
     return () => {
       console.log("Stopping detection loop");
       if (animationFrameId !== undefined) {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [modelsLoaded, labeledDescriptors, isWebcamStarted]);
+  }, [modelsLoaded, isWebcamStarted]);
+  
 
   const detect = async (net) => {
     const video = videoRef.current;
