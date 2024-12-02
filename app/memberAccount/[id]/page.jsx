@@ -132,7 +132,8 @@ export default function MemberDetailsPage() {
       <div className="mt-8">
         <h3 className="text-2xl font-semibold mb-4">Event Logs for {fullName}</h3>
         {eventLogs.length > 0 ? (
-          <EventTable data={eventLogs} /> // Display the event logs using EventTable component
+          <EventTable data={eventLogs} hideMemberColumn={true} />
+          // Display the event logs using EventTable component
         ) : (
           <p>No event logs found for this member.</p>
         )}
