@@ -14,24 +14,43 @@ export default function MemberDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [memberData, setMemberData] = useState(null);
   const [eventLogs, setEventLogs] = useState([]);
+  const [teamName, setTeamName] = useState("N/A"); // State for team name
 
-  // Fetch member details by member_id
+  // Fetch member details and team name
   useEffect(() => {
     const fetchMemberDetails = async () => {
       if (!id) return;
 
-      const { data, error } = await supabase
+      // Fetch member data
+      const { data: member, error: memberError } = await supabase
         .from("members")
         .select("*")
         .eq("member_id", id)
         .single();
 
-      if (error) {
-        console.error("Error fetching member data:", error);
-      } else {
-        setMemberData(data);
-        setLoading(false);
+      if (memberError) {
+        console.error("Error fetching member data:", memberError);
+        return;
       }
+
+      setMemberData(member);
+
+      // Fetch team name using team_id from profiles table
+      if (member.team_id) {
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("team_name")
+          .eq("id", member.team_id) // Match team_id with id in profiles
+          .single();
+
+        if (profileError) {
+          console.error("Error fetching team name:", profileError);
+        } else {
+          setTeamName(profile.team_name || "N/A");
+        }
+      }
+
+      setLoading(false);
     };
 
     fetchMemberDetails();
@@ -42,15 +61,15 @@ export default function MemberDetailsPage() {
     const fetchEventLogs = async () => {
       if (!id) return;
 
-      const { data, error } = await supabase
+      const { data: events, error: eventError } = await supabase
         .from("events")
         .select("*")
-        .eq("member_id", id); // Adjust this if the logs are associated by a different field, like team_id
+        .eq("member_id", id);
 
-      if (error) {
-        console.error("Error fetching event logs:", error);
+      if (eventError) {
+        console.error("Error fetching event logs:", eventError);
       } else {
-        setEventLogs(data);
+        setEventLogs(events);
       }
     };
 
@@ -69,8 +88,7 @@ export default function MemberDetailsPage() {
       {/* Main Card Layout */}
       <div className="flex justify-center">
         <div className="p-6 rounded-lg shadow-lg w-full max-w-4xl flex">
-          
-          {/* Left side: Profile Image and Log History Button */}
+          {/* Left side: Profile Image */}
           <div className="w-1/3 flex flex-col justify-center items-center">
             {memberData.photo_url ? (
               <img
@@ -83,19 +101,10 @@ export default function MemberDetailsPage() {
                 No Image
               </div>
             )}
-            {/* Activity Log Button below the profile image */}
-            <Button
-              variant="outline"
-              onClick={() => router.push(`/logHistory/${id}`)}
-              className="mt-4"
-            >
-              View Log History
-            </Button>
           </div>
 
           {/* Right side: Member Info */}
           <div className="w-2/3 pl-8 flex flex-col">
-            
             {/* Member Name and Edit Button */}
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-3xl font-semibold">{fullName}</h2>
@@ -108,9 +117,9 @@ export default function MemberDetailsPage() {
               </Button>
             </div>
 
-            {/* Team ID */}
+            {/* Team Name */}
             <div className="text-gray-500 mb-4">
-              <p>Team ID: {memberData.team_id || "N/A"}</p>
+              <p>Team Name: {teamName}</p>
             </div>
 
             {/* Divider Line */}
@@ -132,8 +141,7 @@ export default function MemberDetailsPage() {
       <div className="mt-8">
         <h3 className="text-2xl font-semibold mb-4">Event Logs for {fullName}</h3>
         {eventLogs.length > 0 ? (
-          <EventTable data={eventLogs} hideMemberColumn={true} />
-          // Display the event logs using EventTable component
+          <EventTable data={eventLogs} />
         ) : (
           <p>No event logs found for this member.</p>
         )}

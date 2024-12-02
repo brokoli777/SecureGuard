@@ -426,8 +426,8 @@ const ObjectDetection = () => {
       cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
   
       
-      fireClassifier.current.detectMultiScale(gray, fires, 1.3, 18, 0);
-      gunClassifier.current.detectMultiScale(gray, guns, 1.2, 6, 0);
+      fireClassifier.current.detectMultiScale(gray, fires, 1.2, 17, 0);
+      gunClassifier.current.detectMultiScale(gray, guns, 1.2, 3, 0);
 
       
       //fireClassifier.current.detectMultiScale(gray, fires, 1.1, 12, 0);
@@ -457,14 +457,15 @@ const ObjectDetection = () => {
     }
   
     // (Optional) Exclude person detections from display
-    setPredictions(obj.filter((prediction) => prediction.class !== "person"));
-  
+    //setPredictions(obj.filter((prediction) => prediction.class !== "person"));
+    setPredictions(obj);
+
     // Resource cleanup
     src.delete();
     gray.delete();
     fires.delete();
     guns.delete();
-  
+
     // Logging detection data
     const currentTime = Date.now();
     if (
@@ -472,14 +473,14 @@ const ObjectDetection = () => {
       currentTime - lastLoggedTime.current >= slowedDetectionIntervalMs
     ) {
       const detections = obj
-        .filter((prediction) => prediction.class !== "person") // Exclude person detections
+        .filter((prediction) => prediction.class !== "person") // Exclude person detections from logging
         .map((prediction) => ({
           team_id: user?.id || "unknown",
           date_time: new Date().toISOString(),
           category: prediction.class,
           object_confidence: prediction.score,
         }));
-  
+
       if (detections.length > 0) {
         console.log("Object detections for logging:", detections);
         detectionBuffer.current.push(...detections);
