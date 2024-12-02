@@ -154,6 +154,7 @@ export default function TestEventsPage() {
 
         {eventsWithMemberNames.length === 0 ? (
           <p>No events found for the current user.</p>
+
         ) : (
           <EventTable data={eventsWithMemberNames} /> // Pass modified events data with member names
         )}

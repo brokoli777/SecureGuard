@@ -32,7 +32,9 @@ export const signUpAction = async (formData: FormData) => {
     //   "/sign-up",
     //   "Thanks for signing up! Please check your email for a verification link.",
     // );
-    return redirect("/protected");
+    // return redirect("/protected");
+    //Go to event logs page with signup success message
+    return redirect("/event-log");
   }
 };
 
