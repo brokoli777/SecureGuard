@@ -127,7 +127,7 @@ export default function TestEventsPage() {
         </div>
 
         {filteredEvents.length === 0 ? (
-          <p>No events found for the current user.</p>
+          <p>No events logs found</p>
         ) : (
           <EventTable data={filteredEvents} /> // Pass filtered events data to EventTable
         )}

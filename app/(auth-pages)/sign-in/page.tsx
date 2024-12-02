@@ -18,7 +18,7 @@ export default function Login({ searchParams }: { searchParams: Message }) {
       <div className="flex flex-col gap-2 [&>input]:mb-3 mt-8">
         <Label htmlFor="email">Email</Label>
         <Input name="email" placeholder="you@example.com" required />
-        <div className="flex justify-between items-center">
+        {/* <div className="flex justify-between items-center">
           <Label htmlFor="password">Password</Label>
           <Link
             className="text-xs text-foreground underline"
@@ -26,7 +26,7 @@ export default function Login({ searchParams }: { searchParams: Message }) {
           >
             Forgot Password?
           </Link>
-        </div>
+        </div> */}
         <Input
           type="password"
           name="password"
