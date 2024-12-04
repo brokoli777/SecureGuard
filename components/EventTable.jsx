@@ -101,7 +101,11 @@ export default function EventTable({
                 <TableCell>
                   {new Date(event.date_time).toLocaleTimeString()}
                 </TableCell>
-                <TableCell>{event.team_id}</TableCell>
+                <TableCell className="flex">
+                  <span className="truncate max-w-[100px]">
+                    {event.team_id}
+                  </span>
+                </TableCell>{" "}
                 <TableCell>
                   {Number(event.object_confidence).toFixed(2)}
                 </TableCell>
