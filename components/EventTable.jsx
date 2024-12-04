@@ -1,5 +1,12 @@
-import { useState } from 'react';
-import { Table, TableHead, TableRow, TableBody, TableCell, TableHeader } from "@/components/ui/table";
+import { useState } from "react";
+import {
+  Table,
+  TableHead,
+  TableRow,
+  TableBody,
+  TableCell,
+  TableHeader,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -22,12 +29,13 @@ export default function EventTable({
     // Apply the member filtering if needed
     if (selectedMemberName === "N/A" || selectedMemberName === null) {
       filtered = filtered.filter(
-        (event) => 
-          event.category === "person" && 
-          (!event.member_id || membersMap[event.member_id] === "N/A" || membersMap[event.member_id] === null)
+        (event) =>
+          event.category === "person" &&
+          (!event.member_id ||
+            membersMap[event.member_id] === "N/A" ||
+            membersMap[event.member_id] === null)
       );
     }
-    
 
     // Apply date filtering if needed
     if (filterDate) {
@@ -68,13 +76,15 @@ export default function EventTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Category</TableHead>
-              {!hideMemberColumn && <TableHead>Member</TableHead>}
-              <TableHead>Date</TableHead>
-              <TableHead>Time</TableHead>
-              <TableHead>Team ID</TableHead>
-              <TableHead>Object Confidence</TableHead>
+              <TableHead className="w-24">ID</TableHead>
+              <TableHead className="w-24">Category</TableHead>
+              {!hideMemberColumn && (
+                <TableHead className="w-48">Member</TableHead>
+              )}
+              <TableHead className="w-48">Date</TableHead>
+              <TableHead className="w-48">Time</TableHead>
+              <TableHead className="w-24">Team ID</TableHead>
+              <TableHead className="w-24">Confidence</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -82,25 +92,39 @@ export default function EventTable({
               <TableRow key={event.event_id} className={getRowClassName(event)}>
                 <TableCell>{event.event_id}</TableCell>
                 <TableCell>{event.category}</TableCell>
-                {!hideMemberColumn && <TableCell>{event.member_name}</TableCell>}
-                <TableCell>{new Date(event.date_time).toLocaleDateString()}</TableCell>
-                <TableCell>{new Date(event.date_time).toLocaleTimeString()}</TableCell>
+                {!hideMemberColumn && (
+                  <TableCell>{event.member_name}</TableCell>
+                )}
+                <TableCell>
+                  {new Date(event.date_time).toLocaleDateString()}
+                </TableCell>
+                <TableCell>
+                  {new Date(event.date_time).toLocaleTimeString()}
+                </TableCell>
                 <TableCell>{event.team_id}</TableCell>
-                <TableCell>{Number(event.object_confidence).toFixed(2)}</TableCell>
+                <TableCell>
+                  {Number(event.object_confidence).toFixed(2)}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
 
         {/* Pagination controls */}
-        <div className="flex gap-4 items-center justify-center mt-4 py-4 border-t">        
-          <Button variant="outline" onClick={handlePrevPage} disabled={currentPage === 1}>
+        <div className="flex gap-4 items-center justify-center mt-4 py-4 border-t">
+          <Button
+            variant="outline"
+            onClick={handlePrevPage}
+            disabled={currentPage === 1}>
             Previous
           </Button>
-          <span className='text-sm'>
+          <span className="text-sm">
             Page {currentPage} of {totalPages}
           </span>
-          <Button variant="outline" onClick={handleNextPage} disabled={currentPage >= totalPages}>
+          <Button
+            variant="outline"
+            onClick={handleNextPage}
+            disabled={currentPage >= totalPages}>
             Next
           </Button>
         </div>
@@ -108,4 +132,3 @@ export default function EventTable({
     </Card>
   );
 }
-

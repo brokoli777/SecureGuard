@@ -18,12 +18,20 @@ export default function EventLogDashboard({
   resetFilters,
 }) {
   const [active, setActive] = useState(null);
+  const [dateValue, setDateValue] = useState("");
+
   const filters = [
     { label: "Person", icon: User },
     { label: "Fire", icon: Flame },
     { label: "Weapon", icon: Shield, filterValue: "Gun" },
     { label: "Unrecognized", icon: HelpCircle, isUnrecognized: true },
   ];
+
+  const handleReset = () => {
+    setActive(null);
+    setDateValue("");
+    resetFilters();
+  };
 
   return (
     <Card className="w-full p-4">
@@ -32,13 +40,7 @@ export default function EventLogDashboard({
         <div>
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-xl font-semibold">Search Events</h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setActive(null);
-                resetFilters();
-              }}>
+            <Button variant="ghost" size="sm" o onClick={handleReset}>
               <RotateCcw className="w-4 h-4 mr-2" />
               Reset Filters
             </Button>
@@ -56,12 +58,16 @@ export default function EventLogDashboard({
         {/* Filters */}
         <div>
           <h2 className="text-xl font-semibold mb-2">Filters</h2>
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-5 gap-3">
             <Input
               type="date"
               id="filter-date"
-              onChange={(e) => onDateFilter(e.target.value)}
-            />            
+              value={dateValue}
+              onChange={(e) => {
+                setDateValue(e.target.value);
+                onDateFilter(e.target.value);
+              }}
+            />
             {/* Filter Buttons */}
             {filters.map((filter) => (
               <Button
