@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Table, TableHead, TableRow, TableBody, TableCell, TableHeader } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 const ITEMS_PER_PAGE = 15; // Number of items per page
 
@@ -62,47 +63,49 @@ export default function EventTable({
   };
 
   return (
-    <div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>ID</TableHead>
-            <TableHead>Category</TableHead>
-            {!hideMemberColumn && <TableHead>Member</TableHead>}
-            <TableHead>Date</TableHead>
-            <TableHead>Time</TableHead>
-            <TableHead>Team ID</TableHead>
-            <TableHead>Object Confidence</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {currentData.map((event) => (
-            <TableRow key={event.event_id} className={getRowClassName(event)}>
-              <TableCell>{event.event_id}</TableCell>
-              <TableCell>{event.category}</TableCell>
-              {!hideMemberColumn && <TableCell>{event.member_name}</TableCell>}
-              <TableCell>{new Date(event.date_time).toLocaleDateString()}</TableCell>
-              <TableCell>{new Date(event.date_time).toLocaleTimeString()}</TableCell>
-              <TableCell>{event.team_id}</TableCell>
-              <TableCell>{event.object_confidence}</TableCell>
+    <Card className="w-full p-6">
+      <div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>ID</TableHead>
+              <TableHead>Category</TableHead>
+              {!hideMemberColumn && <TableHead>Member</TableHead>}
+              <TableHead>Date</TableHead>
+              <TableHead>Time</TableHead>
+              <TableHead>Team ID</TableHead>
+              <TableHead>Object Confidence</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {currentData.map((event) => (
+              <TableRow key={event.event_id} className={getRowClassName(event)}>
+                <TableCell>{event.event_id}</TableCell>
+                <TableCell>{event.category}</TableCell>
+                {!hideMemberColumn && <TableCell>{event.member_name}</TableCell>}
+                <TableCell>{new Date(event.date_time).toLocaleDateString()}</TableCell>
+                <TableCell>{new Date(event.date_time).toLocaleTimeString()}</TableCell>
+                <TableCell>{event.team_id}</TableCell>
+                <TableCell>{Number(event.object_confidence).toFixed(2)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
 
-      {/* Pagination controls */}
-      <div className="flex gap-4 items-center justify-center mt-4 py-4 border-t">        
-        <Button variant="outline" onClick={handlePrevPage} disabled={currentPage === 1}>
-          Previous
-        </Button>
-        <span className='text-sm'>
-          Page {currentPage} of {totalPages}
-        </span>
-        <Button variant="outline" onClick={handleNextPage} disabled={currentPage >= totalPages}>
-          Next
-        </Button>
+        {/* Pagination controls */}
+        <div className="flex gap-4 items-center justify-center mt-4 py-4 border-t">        
+          <Button variant="outline" onClick={handlePrevPage} disabled={currentPage === 1}>
+            Previous
+          </Button>
+          <span className='text-sm'>
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button variant="outline" onClick={handleNextPage} disabled={currentPage >= totalPages}>
+            Next
+          </Button>
+        </div>
       </div>
-    </div>
+    </Card>
   );
 }
 

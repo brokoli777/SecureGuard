@@ -18,45 +18,33 @@ export default function EventLogDashboard({
   resetFilters,
 }) {
   const [active, setActive] = useState(null);
-
   const filters = [
-    {
-      label: "Person",
-      icon: User,
-    },
-    {
-      label: "Fire",
-      icon: Flame,
-    },
-    {
-      label: "Weapon",
-      icon: Shield,
-      filterValue: "Gun",
-    },
-    {
-      label: "Unrecognized",
-      icon: HelpCircle,
-      isUnrecognized: true,
-    },
+    { label: "Person", icon: User },
+    { label: "Fire", icon: Flame },
+    { label: "Weapon", icon: Shield, filterValue: "Gun" },
+    { label: "Unrecognized", icon: HelpCircle, isUnrecognized: true },
   ];
 
-  const handleFilterClick = (filter) => {
-    setActive(filter.label);
-    if (filter.isUnrecognized) {
-      onCategoryFilter("person", "N/A");
-    } else {
-      onCategoryFilter(filter.filterValue || filter.label);
-    }
-  };
-
   return (
-    <Card className="w-full p-6">
-      <CardContent className="p-0 space-y-6">
+    <Card className="w-full p-4">
+      <CardContent className="p-0 space-y-4">
         {/* Search input */}
         <div>
-          <h2 className="text-2xl mb-3 font-semibold">Search Events</h2>
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-xl font-semibold">Search Events</h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setActive(null);
+                resetFilters();
+              }}>
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Reset Filters
+            </Button>
+          </div>
           <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
             <Input
               type="text"
               placeholder="Search by category or name..."
@@ -65,41 +53,29 @@ export default function EventLogDashboard({
             />
           </div>
         </div>
-
         {/* Filters */}
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-2xl font-semibold">Filters</h2>
-            {/* Filter Buttons */}
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setActive(null);
-                resetFilters();
-              }}>
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Reset All Filters
-            </Button>
-          </div>
-
-          <div className="flex flex-wrap gap-4 items-end">
-            {/* Date Filter */}
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-sm text-gray-400 mb-2">Date</label>
-              <Input
-                type="date"
-                id="filter-date"
-                onChange={(e) => onDateFilter(e.target.value)}
-              />
-            </div>
-
+          <h2 className="text-xl font-semibold mb-2">Filters</h2>
+          <div className="grid grid-cols-5 gap-2">
+            <Input
+              type="date"
+              id="filter-date"
+              onChange={(e) => onDateFilter(e.target.value)}
+            />            
             {/* Filter Buttons */}
             {filters.map((filter) => (
               <Button
                 key={filter.label}
                 variant={active === filter.label ? "default" : "secondary"}
-                className="flex-1"
-                onClick={() => handleFilterClick(filter)}>
+                size="sm"
+                onClick={() => {
+                  setActive(filter.label);
+                  if (filter.isUnrecognized) {
+                    onCategoryFilter("person", "N/A");
+                  } else {
+                    onCategoryFilter(filter.filterValue || filter.label);
+                  }
+                }}>
                 <filter.icon className="w-4 h-4 mr-2" />
                 {filter.label}
               </Button>
