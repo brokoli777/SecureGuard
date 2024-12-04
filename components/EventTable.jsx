@@ -4,30 +4,18 @@ import { Button } from "@/components/ui/button";
 
 const ITEMS_PER_PAGE = 15; // Number of items per page
 
-export default function EventTable({ data, hideMemberColumn, filterDate, onDateFilter, selectedMemberName, membersMap, getRowClassName }) {
+export default function EventTable({
+  data,
+  hideMemberColumn,
+  filterDate,
+  selectedMemberName,
+  membersMap,
+  getRowClassName,
+}) {
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Calculate the index range for the current page
-  const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
-  const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
-  const currentData = data.slice(indexOfFirstItem, indexOfLastItem);
-
-  // Handle page changes
-  const handleNextPage = () => {
-    if (currentPage < Math.ceil(data.length / ITEMS_PER_PAGE)) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
+  // Function to filter events
   const filterEvents = () => {
-    console.log("Filtering events with date:", filterDate);
-
     let filtered = data;
 
     // Apply the member filtering if needed
@@ -39,17 +27,36 @@ export default function EventTable({ data, hideMemberColumn, filterDate, onDateF
 
     // Apply date filtering if needed
     if (filterDate) {
-      filtered = filtered.filter(event =>
-        new Date(event.date_time).toLocaleDateString() === new Date(filterDate).toLocaleDateString()
+      filtered = filtered.filter(
+        (event) =>
+          new Date(event.date_time).toLocaleDateString() ===
+          new Date(filterDate).toLocaleDateString()
       );
     }
 
-    // Update filtered data
-    console.log("Filtered data based on date and member:", filtered);
     return filtered;
   };
 
-  const filteredData = filterEvents(); // Get filtered data based on the date and member
+  const filteredData = filterEvents(); // Apply filtering logic
+  const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+
+  // Calculate the index range for the current page
+  const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
+  const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
+  const currentData = filteredData.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Handle page changes
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
 
   return (
     <div>
@@ -66,8 +73,8 @@ export default function EventTable({ data, hideMemberColumn, filterDate, onDateF
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredData.map((event) => (
-            <TableRow key={event.event_id} className={getRowClassName(event)}> {/* Apply the row class */}
+          {currentData.map((event) => (
+            <TableRow key={event.event_id} className={getRowClassName(event)}>
               <TableCell>{event.event_id}</TableCell>
               <TableCell>{event.category}</TableCell>
               {!hideMemberColumn && <TableCell>{event.member_name}</TableCell>}
@@ -85,11 +92,14 @@ export default function EventTable({ data, hideMemberColumn, filterDate, onDateF
         <Button onClick={handlePrevPage} disabled={currentPage === 1}>
           Previous
         </Button>
-        <span>Page {currentPage} of {Math.ceil(filteredData.length / ITEMS_PER_PAGE)}</span>
-        <Button onClick={handleNextPage} disabled={currentPage >= Math.ceil(filteredData.length / ITEMS_PER_PAGE)}>
+        <span>
+          Page {currentPage} of {totalPages}
+        </span>
+        <Button onClick={handleNextPage} disabled={currentPage >= totalPages}>
           Next
         </Button>
       </div>
     </div>
   );
 }
+

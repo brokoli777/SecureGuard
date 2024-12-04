@@ -24,7 +24,7 @@ export default function EventLogDashboard({
         <Input
           type="date"
           id="filter-date"
-          className="p-2 border border-gray-300 rounded"
+          className="w-[175px] p-2 border border-gray-300 rounded"
           onChange={(e) => onDateFilter(e.target.value)} // Trigger date filter on input change
         />
 
