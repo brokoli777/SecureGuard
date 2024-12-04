@@ -21,9 +21,12 @@ export default function EventTable({
     // Apply the member filtering if needed
     if (selectedMemberName === "N/A" || selectedMemberName === null) {
       filtered = filtered.filter(
-        (event) => !event.member_id || membersMap[event.member_id] === "N/A"
+        (event) => 
+          event.category === "person" && 
+          (!event.member_id || membersMap[event.member_id] === "N/A" || membersMap[event.member_id] === null)
       );
     }
+    
 
     // Apply date filtering if needed
     if (filterDate) {

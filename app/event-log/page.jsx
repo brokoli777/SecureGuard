@@ -82,14 +82,14 @@ export default function TestEventsPage() {
   };
 
   // Handle category filter
-  const handleCategoryFilter = (category) => {
+  const handleCategoryFilter = (category, memberName) => {
     setSelectedCategory(category);
-    filterEvents(searchTerm, filterDate, category);
+    filterEvents(searchTerm, filterDate, category, memberName);
   };
 
-  // Filter events
-  const filterEvents = (searchTerm, filterDate, selectedCategory) => {
-    let filtered = events;
+// Function to filter events based on the search term, date, category, and member name
+const filterEvents = (searchTerm, filterDate, selectedCategory, selectedMemberName) => {
+  let filtered = events;
 
     if (searchTerm) {
       filtered = filtered.filter(
@@ -113,6 +113,13 @@ export default function TestEventsPage() {
         (event) => event.category.toLowerCase() === selectedCategory.toLowerCase()
       );
     }
+
+    // Filter by member name if it's "N/A" (for Unrecognized filter) or null member_id
+    if (selectedMemberName === "N/A" || selectedMemberName === null) {
+      filtered = filtered.filter(
+        (event) => !event.member_id || membersMap[event.member_id] === "N/A"
+      );
+    } 
 
     setFilteredEvents(filtered);
   };
