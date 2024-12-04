@@ -5,13 +5,14 @@ export default function EventLogDashboard({
   onSearch,
   onDateFilter,
   onCategoryFilter,
+  resetFilters,
 }) {
   return (
     <div className="mb-4">
       {/* Search input */}
       <Input
         type="text"
-        placeholder="Search By Category"
+        placeholder="Search By Category or Name"
         className="w-full mb-4"
         onChange={(e) => onSearch(e.target.value)} // Trigger search on input change
       />
@@ -24,7 +25,7 @@ export default function EventLogDashboard({
         <Input
           type="date"
           id="filter-date"
-          className="w-[175px] p-2 border border-gray-300 rounded"
+          className="w-[150px] p-2 border border-gray-300 rounded"
           onChange={(e) => onDateFilter(e.target.value)} // Trigger date filter on input change
         />
 
@@ -33,7 +34,7 @@ export default function EventLogDashboard({
           {["Person", "Fire", "Weapon", "Unrecognized"].map((category) => (
             <Button
               key={category}
-              className="bg-[#1e40af] hover:bg-[#1e3a8a] text-white w-[140px]"
+              className="bg-[#1e40af] hover:bg-[#1e3a8a] text-white w-[120px]"
               onClick={() => {
                 if (category === "Weapon") {
                   onCategoryFilter("Gun"); // 'Weapon' button filters for 'Gun'
@@ -50,6 +51,9 @@ export default function EventLogDashboard({
               {category}
             </Button>
           ))}
+          <Button onClick={resetFilters} className="w-[120px]">
+            Reset Filters
+          </Button>
         </div>
       </div>
     </div>

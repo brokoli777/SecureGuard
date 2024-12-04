@@ -161,14 +161,12 @@ export default function TestEventsPage() {
             onSearch={handleSearch}
             onDateFilter={handleDateFilter}
             onCategoryFilter={handleCategoryFilter}
+            resetFilters={resetFilters}
           />
-          <Button onClick={resetFilters} className="ml-2">
-            Reset Filters
-          </Button>
         </div>
 
         {eventsWithMemberNames.length === 0 ? (
-          <p>No events found for the current user.</p>
+          <p>No events found for the current filter.</p>
         ) : (
           <EventTable
             data={eventsWithMemberNames}
