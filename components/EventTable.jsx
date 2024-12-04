@@ -91,14 +91,14 @@ export default function EventTable({
       </Table>
 
       {/* Pagination controls */}
-      <div className="flex justify-center mt-4 space-x-4">
-        <Button onClick={handlePrevPage} disabled={currentPage === 1}>
+      <div className="flex gap-4 items-center justify-center mt-4 py-4 border-t">        
+        <Button variant="outline" onClick={handlePrevPage} disabled={currentPage === 1}>
           Previous
         </Button>
-        <span>
+        <span className='text-sm'>
           Page {currentPage} of {totalPages}
         </span>
-        <Button onClick={handleNextPage} disabled={currentPage >= totalPages}>
+        <Button variant="outline" onClick={handleNextPage} disabled={currentPage >= totalPages}>
           Next
         </Button>
       </div>
