@@ -127,11 +127,21 @@ export default function MemberDetailsPage() {
 
             {/* Contact and Location Information */}
             <div className="space-y-2">
-              <p><strong>Email:</strong> {memberData.email || "N/A"}</p>
-              <p><strong>Phone:</strong> {memberData.phone_number || "N/A"}</p>
-              <p><strong>Street Address:</strong> {memberData.street_address || "N/A"}</p>
-              <p><strong>City:</strong> {memberData.city || "N/A"}</p>
-              <p><strong>Notes:</strong> {memberData.notes || "N/A"}</p>
+              <p>
+                <strong>Email:</strong> {memberData.email || "N/A"}
+              </p>
+              <p>
+                <strong>Phone:</strong> {memberData.phone_number || "N/A"}
+              </p>
+              <p>
+                <strong>Street Address:</strong> {memberData.street_address || "N/A"}
+              </p>
+              <p>
+                <strong>City:</strong> {memberData.city || "N/A"}
+              </p>
+              <p>
+                <strong>Notes:</strong> {memberData.notes || "N/A"}
+              </p>
             </div>
           </div>
         </div>
@@ -141,7 +151,13 @@ export default function MemberDetailsPage() {
       <div className="mt-8">
         <h3 className="text-2xl font-semibold mb-4">Event Logs for {fullName}</h3>
         {eventLogs.length > 0 ? (
-          <EventTable data={eventLogs} />
+          <EventTable
+            data={eventLogs}
+            hideMemberColumn={true}
+            getRowClassName={(event) => {
+              return event.category === "Critical" ? "bg-red-500" : "";
+            }}
+          />
         ) : (
           <p>No event logs found for this member.</p>
         )}
