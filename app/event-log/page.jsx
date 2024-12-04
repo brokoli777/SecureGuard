@@ -87,9 +87,14 @@ export default function TestEventsPage() {
     filterEvents(searchTerm, filterDate, category, memberName);
   };
 
-// Function to filter events based on the search term, date, category, and member name
-const filterEvents = (searchTerm, filterDate, selectedCategory, selectedMemberName) => {
-  let filtered = events;
+  // Function to filter events based on the search term, date, category, and member name
+  const filterEvents = (
+    searchTerm,
+    filterDate,
+    selectedCategory,
+    selectedMemberName
+  ) => {
+    let filtered = events;
 
     if (searchTerm) {
       filtered = filtered.filter(
@@ -97,20 +102,25 @@ const filterEvents = (searchTerm, filterDate, selectedCategory, selectedMemberNa
           event.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
           event.team_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (membersMap[event.member_id] &&
-            membersMap[event.member_id].toLowerCase().includes(searchTerm.toLowerCase()))
+            membersMap[event.member_id]
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase()))
       );
     }
 
     if (filterDate) {
       filtered = filtered.filter((event) => {
-        const eventDate = new Date(event.date_time).toISOString().split("T")[0];
+        const eventDate = new Date(event.date_time)
+          .toISOString()
+          .split("T")[0];
         return eventDate === filterDate;
       });
     }
 
     if (selectedCategory) {
       filtered = filtered.filter(
-        (event) => event.category.toLowerCase() === selectedCategory.toLowerCase()
+        (event) =>
+          event.category.toLowerCase() === selectedCategory.toLowerCase()
       );
     }
 
@@ -119,7 +129,7 @@ const filterEvents = (searchTerm, filterDate, selectedCategory, selectedMemberNa
       filtered = filtered.filter(
         (event) => !event.member_id || membersMap[event.member_id] === "N/A"
       );
-    } 
+    }
 
     setFilteredEvents(filtered);
   };
@@ -132,17 +142,31 @@ const filterEvents = (searchTerm, filterDate, selectedCategory, selectedMemberNa
     setFilteredEvents(events); // Reset to original data
   };
 
-  const eventsWithMemberNames = filteredEvents.map((event) => ({
-    ...event,
-    member_name: event.member_id ? membersMap[event.member_id] : "N/A",
-  }));
+  // Map events to include member names, setting "Unrecognized" where appropriate
+  const eventsWithMemberNames = filteredEvents.map((event) => {
+    let memberName = "";
+    const category = event.category?.toLowerCase() || "";
 
+    if (event.member_id && membersMap[event.member_id]) {
+      memberName = membersMap[event.member_id];
+    } else if (category === "person") {
+      memberName = "Unrecognized";
+    } else {
+      memberName = "N/A";
+    }
+
+    return { ...event, member_name: memberName };
+  });
+
+  // Adjust the getRowClassName function to highlight hazardous events
   const getRowClassName = (event) => {
-    if (
-      event.category === "person" &&
-      (!event.member_id || membersMap[event.member_id] === "N/A")
-    ) {
-      return "bg-amber-600 text-white";
+    const category = event.category?.toLowerCase() || "";
+    if (category === "person" && event.member_name === "Unrecognized") {
+      return "bg-amber-600 text-white"; // Highlight for unrecognized persons
+    } else if (category === "gun") {
+      return "bg-red-600 text-white"; // Highlight for gun events
+    } else if (category === "fire") {
+      return "bg-orange-600 text-white"; // Highlight for fire events
     }
     return "";
   };

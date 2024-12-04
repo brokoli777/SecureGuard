@@ -433,7 +433,7 @@ const ObjectDetection = () => {
   
       
       fireClassifier.current.detectMultiScale(gray, fires, 1.2, 17, 0);
-      gunClassifier.current.detectMultiScale(gray, guns, 1.2, 3, 0);
+      gunClassifier.current.detectMultiScale(gray, guns, 1.3, 4, 0);
 
       
       //fireClassifier.current.detectMultiScale(gray, fires, 1.1, 12, 0);
