@@ -37,13 +37,15 @@ export default function EventTable({
       );
     }
 
-    // Apply date filtering if needed
     if (filterDate) {
-      filtered = filtered.filter(
-        (event) =>
-          new Date(event.date_time).toLocaleDateString() ===
-          new Date(filterDate).toLocaleDateString()
-      );
+      const filterDateObj = new Date(filterDate);
+      filtered = filtered.filter((event) => {
+        const eventDate = new Date(event.date_time);
+        // Compare only the date parts (YYYY-MM-DD)
+        const eventDateString = eventDate.toISOString().split("T")[0]; // YYYY-MM-DD
+        const filterDateString = filterDateObj.toISOString().split("T")[0]; // YYYY-MM-DD
+        return eventDateString === filterDateString;
+      });
     }
 
     return filtered;
@@ -105,7 +107,7 @@ export default function EventTable({
                   <span className="truncate max-w-[100px]">
                     {event.team_id}
                   </span>
-                </TableCell>{" "}
+                </TableCell>
                 <TableCell>
                   {Number(event.object_confidence).toFixed(2)}
                 </TableCell>
@@ -115,7 +117,7 @@ export default function EventTable({
         </Table>
 
         {/* Pagination controls */}
-        <div className="flex gap-4 items-center justify-center mt-4 py-4 border-t">
+        {/* <div className="flex gap-4 items-center justify-center mt-4 py-4 border-t">
           <Button
             variant="outline"
             onClick={handlePrevPage}
@@ -131,7 +133,7 @@ export default function EventTable({
             disabled={currentPage >= totalPages}>
             Next
           </Button>
-        </div>
+        </div> */}
       </div>
     </Card>
   );
