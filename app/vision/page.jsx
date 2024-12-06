@@ -25,7 +25,7 @@ const ObjectDetection = () => {
   const [labeledDescriptors, setLabeledDescriptors] = useState([]);
   const [videoURL, setVideoURL] = useState("");
   const [videoSource, setVideoSource] = useState("webcam"); // "webcam" or "url"
-  const [haarToggle, setHaarToggle] = useState(true); 
+  const [haarToggle, setHaarToggle] = useState(true);
 
   const supabase = createClient();
 
@@ -136,7 +136,9 @@ const ObjectDetection = () => {
       }
     };
     loadModels();
-    loadCascade();
+    // if (haarToggle) {
+      loadCascade();
+    // }
   }, []);
 
   const startWebcam = async () => {
@@ -427,54 +429,56 @@ const ObjectDetection = () => {
     const context = canvas.getContext("2d");
     if (!context) return;
 
-    const src = new cv.Mat(videoHeight, videoWidth, cv.CV_8UC4);
-    const gray = new cv.Mat();
-    const fires = new cv.RectVector();
-    const guns = new cv.RectVector();
+    if (haarToggle) {
+      const src = new cv.Mat(videoHeight, videoWidth, cv.CV_8UC4);
+      const gray = new cv.Mat();
+      const fires = new cv.RectVector();
+      const guns = new cv.RectVector();
 
-    if (fireClassifier.current && gunClassifier.current) {
-      const cap = new cv.VideoCapture(video);
-      cap.read(src);
-      cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+      if (fireClassifier.current && gunClassifier.current) {
+        const cap = new cv.VideoCapture(video);
+        cap.read(src);
+        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
 
-      fireClassifier.current.detectMultiScale(gray, fires, 1.2, 17, 0);
-      gunClassifier.current.detectMultiScale(gray, guns, 1.3, 4, 0);
+        fireClassifier.current.detectMultiScale(gray, fires, 1.2, 17, 0);
+        gunClassifier.current.detectMultiScale(gray, guns, 1.3, 4, 0);
 
-      //fireClassifier.current.detectMultiScale(gray, fires, 1.1, 12, 0);
-      //gunClassifier.current.detectMultiScale(gray, guns, 1.3, 20, 0);
+        //fireClassifier.current.detectMultiScale(gray, fires, 1.1, 12, 0);
+        //gunClassifier.current.detectMultiScale(gray, guns, 1.3, 20, 0);
 
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      console.log(`${fires.size()} Fires(s) detected`);
-      console.log(`${guns.size()} Gun(s) detected`);
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        console.log(`${fires.size()} Fires(s) detected`);
+        console.log(`${guns.size()} Gun(s) detected`);
 
-      for (let i = 0; i < fires.size(); ++i) {
-        const fire = fires.get(i);
-        obj.push({
-          bbox: [fire.x, fire.y, fire.width, fire.height],
-          class: "Fire",
-          score: 1,
-        });
+        for (let i = 0; i < fires.size(); ++i) {
+          const fire = fires.get(i);
+          obj.push({
+            bbox: [fire.x, fire.y, fire.width, fire.height],
+            class: "Fire",
+            score: 1,
+          });
+        }
+
+        for (let i = 0; i < guns.size(); ++i) {
+          const gun = guns.get(i);
+          obj.push({
+            bbox: [gun.x, gun.y, gun.width, gun.height],
+            class: "Gun",
+            score: 1,
+          });
+        }
       }
 
-      for (let i = 0; i < guns.size(); ++i) {
-        const gun = guns.get(i);
-        obj.push({
-          bbox: [gun.x, gun.y, gun.width, gun.height],
-          class: "Gun",
-          score: 1,
-        });
-      }
+      // Resource cleanup
+      src.delete();
+      gray.delete();
+      fires.delete();
+      guns.delete();
     }
 
     // (Optional) Exclude person detections from display
     //setPredictions(obj.filter((prediction) => prediction.class !== "person"));
     setPredictions(obj);
-
-    // Resource cleanup
-    src.delete();
-    gray.delete();
-    fires.delete();
-    guns.delete();
 
     // Logging detection data
     const currentTime = Date.now();
@@ -600,6 +604,22 @@ const ObjectDetection = () => {
           )}
         </div>
 
+        <div className="flex items-center gap-2 mb-4">
+          <label class="inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              value=""
+              class="sr-only peer"
+              checked={haarToggle}
+              onChange={() => setHaarToggle(!haarToggle)}
+            />
+            <div class="relative w-11 h-6 bg-gray-200  rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">
+              Detect Fire and Guns
+            </span>
+          </label>
+        </div>
+
         <button
           onClick={isWebcamStarted ? stopWebcam : startWebcam}
           disabled={!modelsLoaded}
@@ -614,9 +634,8 @@ const ObjectDetection = () => {
       </div>
 
       <div className="relative">
-
-        {isWebcamStarted && (
-          videoSource === "webcam" ? (
+        {isWebcamStarted &&
+          (videoSource === "webcam" ? (
             <video
               ref={videoRef}
               className="w-full h-full object-cover rounded-lg"
@@ -632,8 +651,7 @@ const ObjectDetection = () => {
               autoPlay
               crossOrigin="anonymous"
             />
-          )
-        ) }
+          ))}
 
         {/* Canvas for object detection */}
 
