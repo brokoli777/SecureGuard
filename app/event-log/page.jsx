@@ -18,6 +18,9 @@ export default function TestEventsPage() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [membersMap, setMembersMap] = useState({}); // Store member_id -> name map
 
+  const [currentPage, setCurrentPage] = useState(1); // Add currentPage state
+  const itemsPerPage = 10; // Set the number of items per page
+
   useEffect(() => {
     const fetchData = async () => {
       const {
@@ -132,6 +135,7 @@ export default function TestEventsPage() {
     }
 
     setFilteredEvents(filtered);
+    setCurrentPage(1); // Reset pagination when the filter changes
   };
 
   // Reset filters and data
@@ -140,6 +144,7 @@ export default function TestEventsPage() {
     setFilterDate("");
     setSelectedCategory("");
     setFilteredEvents(events); // Reset to original data
+    setCurrentPage(1); // Reset pagination on reset
   };
 
   // Map events to include member names, setting "Unrecognized" where appropriate
@@ -171,6 +176,15 @@ export default function TestEventsPage() {
     return "";
   };
 
+  // Paginate filtered events
+  const indexOfLastEvent = currentPage * itemsPerPage;
+  const indexOfFirstEvent = indexOfLastEvent - itemsPerPage;
+  const currentEvents = eventsWithMemberNames.slice(indexOfFirstEvent, indexOfLastEvent);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -184,7 +198,7 @@ export default function TestEventsPage() {
       <div className="p-4">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold">Event Logs</h1>
-          <PrintButtons filteredEvents={eventsWithMemberNames} />
+          <PrintButtons filteredEvents={currentEvents} />
         </div>
 
         <div className="mb-6">
@@ -196,11 +210,11 @@ export default function TestEventsPage() {
           />
         </div>
 
-        {eventsWithMemberNames.length === 0 ? (
+        {currentEvents.length === 0 ? (
           <p>No events found for the current filter.</p>
         ) : (
           <EventTable
-            data={eventsWithMemberNames}
+            data={currentEvents}
             hideMemberColumn={false}
             filterDate={filterDate}
             selectedMemberName={searchTerm}
@@ -208,6 +222,23 @@ export default function TestEventsPage() {
             getRowClassName={getRowClassName}
           />
         )}
+
+        {/* Pagination Controls */}
+        <div className="flex justify-center mt-6">
+          <Button
+            disabled={currentPage === 1}
+            onClick={() => handlePageChange(currentPage - 1)}
+          >
+            Previous
+          </Button>
+          <span className="mx-4">Page {currentPage}</span>
+          <Button
+            disabled={currentPage * itemsPerPage >= filteredEvents.length}
+            onClick={() => handlePageChange(currentPage + 1)}
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </div>
   );
