@@ -24,6 +24,8 @@ const ObjectDetection = () => {
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [labeledDescriptors, setLabeledDescriptors] = useState([]);
   const [videoURL, setVideoURL] = useState("");
+  const [videoSource, setVideoSource] = useState("webcam"); // "webcam" or "url"
+  const [haarToggle, setHaarToggle] = useState(true); 
 
   const supabase = createClient();
 
@@ -138,8 +140,9 @@ const ObjectDetection = () => {
   }, []);
 
   const startWebcam = async () => {
+    setIsWebcamStarted(true);
+    if (videoSource !== "webcam") return;
     try {
-      setIsWebcamStarted(true);
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -151,12 +154,16 @@ const ObjectDetection = () => {
   };
 
   const stopWebcam = () => {
-    const video = videoRef.current;
-    if (video && video.srcObject) {
-      const stream = video.srcObject;
+    if (
+      videoSource === "webcam" &&
+      videoRef.current &&
+      videoRef.current.srcObject
+    ) {
+      const stream = videoRef.current.srcObject;
       stream.getTracks().forEach((track) => track.stop());
-      video.srcObject = null;
+      videoRef.current.srcObject = null;
     }
+
     setIsWebcamStarted(false);
     setPredictions([]);
 
@@ -558,7 +565,40 @@ const ObjectDetection = () => {
           </div>
         )}
 
-
+        <div className="flex items-center gap-4 mb-4 flex-col">
+          Select video source:
+          <div className="flex items-center gap-2">
+            <button
+              className={`px-4 py-2 rounded-lg transition ${
+                videoSource === "webcam"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-black"
+              }`}
+              onClick={() => setVideoSource("webcam")}
+            >
+              Camera
+            </button>
+            <button
+              className={`px-4 py-2 rounded-lg transition ${
+                videoSource === "url"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-black"
+              }`}
+              onClick={() => setVideoSource("url")}
+            >
+              URL
+            </button>
+          </div>
+          {videoSource === "url" && (
+            <input
+              type="text"
+              placeholder="Enter video URL"
+              value={videoURL}
+              onChange={(e) => setVideoURL(e.target.value)}
+              className="px-4 py-2 border rounded-lg w-full"
+            />
+          )}
+        </div>
 
         <button
           onClick={isWebcamStarted ? stopWebcam : startWebcam}
@@ -574,30 +614,40 @@ const ObjectDetection = () => {
       </div>
 
       <div className="relative">
-        {isWebcamStarted ? (
-          <div>
+
+        {isWebcamStarted && (
+          videoSource === "webcam" ? (
             <video
               ref={videoRef}
               className="w-full h-full object-cover rounded-lg"
               autoPlay
               muted
             />
-            {/* Canvas for object detection */}
-            <canvas
-              ref={objectCanvasRef}
-              className="absolute top-0 left-0 w-full h-full"
-              style={{ pointerEvents: "none", zIndex: 2 }}
+          ) : (
+            <video
+              ref={videoRef}
+              src={videoURL}
+              className="w-full h-full rounded-lg"
+              controls
+              autoPlay
+              crossOrigin="anonymous"
             />
-            {/* Canvas for face detection */}
-            <canvas
-              ref={faceCanvasRef}
-              className="absolute top-0 left-0 w-full h-full"
-              style={{ pointerEvents: "none", zIndex: 3 }}
-            />
-          </div>
-        ) : (
-          <div className="w-full h-auto">Webcam is off</div>
-        )}
+          )
+        ) }
+
+        {/* Canvas for object detection */}
+
+        <canvas
+          ref={objectCanvasRef}
+          className="absolute top-0 left-0 w-full h-full"
+          style={{ pointerEvents: "none", zIndex: 2 }}
+        />
+        {/* Canvas for face detection */}
+        <canvas
+          ref={faceCanvasRef}
+          className="absolute top-0 left-0 w-full h-full"
+          style={{ pointerEvents: "none", zIndex: 3 }}
+        />
 
         {/* Object detection labels (if any) */}
         {predictions.length > 0 &&
