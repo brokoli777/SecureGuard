@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 import "@tensorflow/tfjs";
 import * as faceapi from "face-api.js";
 import cv from "opencv.js";
+import Spinner from "@/components/ui/spinner";
 
 const ObjectDetection = () => {
   console.log("ObjectDetection component is rendering");
@@ -22,6 +23,7 @@ const ObjectDetection = () => {
   const [user, setUser] = useState(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [labeledDescriptors, setLabeledDescriptors] = useState([]);
+  const [videoURL, setVideoURL] = useState("");
 
   const supabase = createClient();
 
@@ -111,7 +113,7 @@ const ObjectDetection = () => {
         console.error("Error fetching user or descriptors:", error);
       }
     };
-    
+
     getUser();
   }, [supabase]);
 
@@ -209,7 +211,9 @@ const ObjectDetection = () => {
       gunClassifier.current = new cv.CascadeClassifier();
 
       if (!fireClassifier.current.load("/haarcascade_fire.xml")) {
-        console.error("Error loading Haar Cascade XML file for fire detection.");
+        console.error(
+          "Error loading Haar Cascade XML file for fire detection."
+        );
       } else {
         console.log("Haar Cascade loaded successfully for fire detection");
       }
@@ -226,25 +230,21 @@ const ObjectDetection = () => {
 
   useEffect(() => {
     let animationFrameId;
-  
+
     const runDetection = async () => {
       if (!isWebcamStarted) {
         console.log("Webcam is stopped, stopping detection loop");
         return; // Exit the function if webcam is stopped
       }
-      if (
-        videoRef.current &&
-        faceCanvasRef.current &&
-        modelsLoaded
-      ) {
+      if (videoRef.current && faceCanvasRef.current && modelsLoaded) {
         console.log("Step 1: Starting face detection");
-  
+
         const options = new faceapi.SsdMobilenetv1Options({
           minConfidence: 0.5,
         });
         const video = videoRef.current;
         const canvas = faceCanvasRef.current;
-  
+
         // Ensure the video is ready and dimensions are available
         if (
           video.readyState < 2 ||
@@ -255,22 +255,22 @@ const ObjectDetection = () => {
           animationFrameId = requestAnimationFrame(runDetection);
           return;
         }
-  
+
         console.log("Step 2: Detecting faces in the video feed");
-  
+
         // Detect faces and obtain descriptors
         const detections = await faceapi
           .detectAllFaces(video, options)
           .withFaceLandmarks()
           .withFaceDescriptors();
-  
+
         console.log("Step 3: Face detections obtained:", detections);
-  
+
         const displaySize = {
           width: video.videoWidth,
           height: video.videoHeight,
         };
-  
+
         // Ensure displaySize is valid
         if (displaySize.width === 0 || displaySize.height === 0) {
           console.log("Invalid displaySize dimensions");
@@ -279,27 +279,27 @@ const ObjectDetection = () => {
           }
           return;
         }
-  
+
         faceapi.matchDimensions(canvas, displaySize);
-  
+
         if (detections) {
           const resizedDetections = faceapi.resizeResults(
             detections,
             displaySize
           );
-  
+
           // Clear canvas before drawing new detections
           const context = canvas.getContext("2d");
           if (context) {
             context.clearRect(0, 0, canvas.width, canvas.height);
           }
-  
+
           // Draw bounding boxes and landmarks on canvas
           faceapi.draw.drawDetections(canvas, resizedDetections);
           faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
-  
+
           const detectionsForLogging = []; // Collect detections for logging
-  
+
           if (labeledDescriptors.length > 0) {
             // Set up face matcher when there are labeled descriptors
             const faceMatcher = new faceapi.FaceMatcher(
@@ -310,31 +310,31 @@ const ObjectDetection = () => {
               "Face matcher initialized with labeled descriptors:",
               labeledDescriptors
             );
-  
+
             // Label each detection based on descriptors
             resizedDetections.forEach((detection, i) => {
               const result = faceMatcher.findBestMatch(detection.descriptor);
               const box = detection.detection.box;
               const { label: detectedLabel, distance } = result;
-  
+
               // Standardize label
               const label = detectedLabel.toLowerCase().trim();
-  
+
               // Retrieve member_id using the label
               const member_id = labelToMemberIdRef.current[label] || null;
-  
+
               // Confidence check and label display
               const confidence = (1 - distance).toFixed(2);
               const labelToDisplay =
                 label === "unknown" ? "Unknown Person" : label;
-  
+
               // Draw bounding box with label
               const drawBox = new faceapi.draw.DrawBox(box, {
                 label: `${labelToDisplay} (${confidence})`,
                 boxColor: "green",
               });
               drawBox.draw(canvas);
-  
+
               // Prepare detection data for logging
               detectionsForLogging.push({
                 team_id: user?.id || "unknown",
@@ -348,14 +348,14 @@ const ObjectDetection = () => {
             // No labeled descriptors, label all faces as "Unknown Person"
             resizedDetections.forEach((detection, i) => {
               const box = detection.detection.box;
-  
+
               // Draw bounding box with label
               const drawBox = new faceapi.draw.DrawBox(box, {
                 label: `Unknown Person`,
                 boxColor: "green",
               });
               drawBox.draw(canvas);
-  
+
               // Prepare detection data for logging
               detectionsForLogging.push({
                 team_id: user?.id || "unknown",
@@ -366,7 +366,7 @@ const ObjectDetection = () => {
               });
             });
           }
-  
+
           // Logging detection data
           if (detectionsForLogging.length > 0) {
             console.log("Detections for logging:", detectionsForLogging);
@@ -380,18 +380,18 @@ const ObjectDetection = () => {
           "Skipping detection: Either video, canvas, or models are not ready."
         );
       }
-  
+
       // Schedule the next frame only if webcam is started
       if (isWebcamStarted) {
         animationFrameId = requestAnimationFrame(runDetection);
       }
     };
-  
+
     if (isWebcamStarted) {
       console.log("Starting detection loop");
       runDetection();
     }
-  
+
     return () => {
       console.log("Stopping detection loop");
       if (animationFrameId !== undefined) {
@@ -399,50 +399,47 @@ const ObjectDetection = () => {
       }
     };
   }, [modelsLoaded, isWebcamStarted]);
-  
 
   const detect = async (net) => {
     const video = videoRef.current;
     const canvas = objectCanvasRef.current;
-  
+
     if (!video || !canvas || video.readyState < 4 || !isWebcamStarted) return;
-  
+
     // Set video dimensions once
     const videoWidth = video.videoWidth;
     const videoHeight = video.videoHeight;
-  
+
     video.width = videoWidth;
     video.height = videoHeight;
-  
+
     // Make object detections
     const obj = await net.detect(video);
     console.log("Detected objects:", obj);
-  
+
     const context = canvas.getContext("2d");
     if (!context) return;
-  
+
     const src = new cv.Mat(videoHeight, videoWidth, cv.CV_8UC4);
     const gray = new cv.Mat();
     const fires = new cv.RectVector();
     const guns = new cv.RectVector();
-  
+
     if (fireClassifier.current && gunClassifier.current) {
       const cap = new cv.VideoCapture(video);
       cap.read(src);
       cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-  
-      
+
       fireClassifier.current.detectMultiScale(gray, fires, 1.2, 17, 0);
       gunClassifier.current.detectMultiScale(gray, guns, 1.3, 4, 0);
 
-      
       //fireClassifier.current.detectMultiScale(gray, fires, 1.1, 12, 0);
       //gunClassifier.current.detectMultiScale(gray, guns, 1.3, 20, 0);
-  
+
       context.clearRect(0, 0, canvas.width, canvas.height);
       console.log(`${fires.size()} Fires(s) detected`);
       console.log(`${guns.size()} Gun(s) detected`);
-  
+
       for (let i = 0; i < fires.size(); ++i) {
         const fire = fires.get(i);
         obj.push({
@@ -451,7 +448,7 @@ const ObjectDetection = () => {
           score: 1,
         });
       }
-  
+
       for (let i = 0; i < guns.size(); ++i) {
         const gun = guns.get(i);
         obj.push({
@@ -461,7 +458,7 @@ const ObjectDetection = () => {
         });
       }
     }
-  
+
     // (Optional) Exclude person detections from display
     //setPredictions(obj.filter((prediction) => prediction.class !== "person"));
     setPredictions(obj);
@@ -494,7 +491,6 @@ const ObjectDetection = () => {
       }
     }
   };
-  
 
   const sendBatchToSupabase = async (batch) => {
     // Clean up batch data to remove member_id from non-person detections
@@ -513,7 +509,9 @@ const ObjectDetection = () => {
 
     console.log("Sending batch to Supabase:", cleanedBatch);
     try {
-      const { data, error } = await supabase.from("events").insert(cleanedBatch);
+      const { data, error } = await supabase
+        .from("events")
+        .insert(cleanedBatch);
       if (error) {
         console.error("Error inserting batch to Supabase:", error);
       } else {
@@ -539,7 +537,10 @@ const ObjectDetection = () => {
     if (isWebcamStarted && modelsLoaded) {
       runModel();
 
-      const batchInterval = setInterval(batchProcess, supabasePostReqIntervalMs);
+      const batchInterval = setInterval(
+        batchProcess,
+        supabasePostReqIntervalMs
+      );
 
       return () => {
         clearInterval(batchInterval); // Clear batch processing interval
@@ -548,14 +549,24 @@ const ObjectDetection = () => {
   }, [isWebcamStarted, modelsLoaded]);
 
   return (
-    <div className="w-full flex flex-col items-center justify-center">
+    <div className="w-full flex flex-col items-center justify-center text-center">
       <div className="mb-4">
+        {!modelsLoaded && (
+          <div className="">
+            <p className="p-2">Loading models...</p>
+            <Spinner />
+          </div>
+        )}
+
+
+
         <button
           onClick={isWebcamStarted ? stopWebcam : startWebcam}
+          disabled={!modelsLoaded}
           className={
             isWebcamStarted
               ? "px-4 py-2 rounded-lg text-black hover:bg-blue-500 bg-[linear-gradient(to_right,theme(colors.indigo.400),theme(colors.indigo.100),theme(colors.sky.400),theme(colors.fuchsia.400),theme(colors.sky.400),theme(colors.indigo.100),theme(colors.indigo.400))] bg-[length:500%_auto] animate-gradient"
-              : "px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 transition"
+              : "px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 transition disabled:opacity-50"
           }
         >
           {isWebcamStarted ? "Stop" : "Start"} SecureGuard
