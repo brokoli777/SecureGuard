@@ -37,13 +37,15 @@ export default function EventTable({
       );
     }
 
-    // Apply date filtering if needed
     if (filterDate) {
-      filtered = filtered.filter(
-        (event) =>
-          new Date(event.date_time).toLocaleDateString() ===
-          new Date(filterDate).toLocaleDateString()
-      );
+      const filterDateObj = new Date(filterDate);
+      filtered = filtered.filter((event) => {
+        const eventDate = new Date(event.date_time);
+        // Compare only the date parts (YYYY-MM-DD)
+        const eventDateString = eventDate.toISOString().split("T")[0]; // YYYY-MM-DD
+        const filterDateString = filterDateObj.toISOString().split("T")[0]; // YYYY-MM-DD
+        return eventDateString === filterDateString;
+      });
     }
 
     return filtered;

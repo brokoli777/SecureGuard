@@ -112,11 +112,13 @@ export default function TestEventsPage() {
     }
 
     if (filterDate) {
+      const filterDateObj = new Date(filterDate);
       filtered = filtered.filter((event) => {
-        const eventDate = new Date(event.date_time)
-          .toISOString()
-          .split("T")[0];
-        return eventDate === filterDate;
+        const eventDate = new Date(event.date_time);
+        // Compare only the date parts (YYYY-MM-DD)
+        const eventDateString = eventDate.toISOString().split("T")[0]; // YYYY-MM-DD
+        const filterDateString = filterDateObj.toISOString().split("T")[0]; // YYYY-MM-DD
+        return eventDateString === filterDateString;
       });
     }
 
