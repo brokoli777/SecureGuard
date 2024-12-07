@@ -73,13 +73,15 @@ export const printEventTable = (data, currentPageOnly = false) => {
         rowClass = "highlight-orange";
       }
 
+      const shortenId = (id) =>
+        id ? `${id.substring(0, 4)}...${id.slice(-4)}` : "N/A";
       return `
         <tr class="${rowClass}">
           <td>${event.event_id || "N/A"}</td>
           <td>${event.category || "N/A"}</td>
           <td>${date.toLocaleDateString()}</td>
           <td>${date.toLocaleTimeString()}</td>
-          <td>${event.team_id || "N/A"}</td>
+          <td>${shortenId(event.team_id)}</td>
           <td>${event.member_name || "N/A"}</td>
           <td>${event.object_confidence || "N/A"}</td>
         </tr>
@@ -176,7 +178,7 @@ export const printEventTable = (data, currentPageOnly = false) => {
 
           @page {
             margin: 1cm;
-            size: A4 landscape;
+            size: A4 portrait;
           }
         </style>
       </head>
