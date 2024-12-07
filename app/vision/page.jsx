@@ -7,6 +7,7 @@ import "@tensorflow/tfjs";
 import * as faceapi from "face-api.js";
 import cv from "opencv.js";
 import Spinner from "@/components/ui/spinner";
+import { Card } from "@/components/ui/card";
 
 const ObjectDetection = () => {
   console.log("ObjectDetection component is rendering");
@@ -137,7 +138,7 @@ const ObjectDetection = () => {
     };
     loadModels();
     // if (haarToggle) {
-      loadCascade();
+    loadCascade();
     // }
   }, []);
 
@@ -560,36 +561,36 @@ const ObjectDetection = () => {
   }, [isWebcamStarted, modelsLoaded]);
 
   return (
-    <div className="w-full flex flex-col items-center justify-center text-center">
-      <div className="mb-4">
+    <Card className="w-auto p-8 mx-auto">
+      <div className="w-full flex flex-col items-center justify-center space-y-8 px-8">
         {!modelsLoaded && (
-          <div className="">
+          <div className="text-center">
             <p className="p-2">Loading models...</p>
             <Spinner />
           </div>
         )}
 
-        <div className="flex items-center gap-4 mb-4 flex-col">
-          Select video source:
-          <div className="flex items-center gap-2">
+        <div className="w-full max-w-md space-y-6">
+          <h2 className="text-lg font-medium text-center mt-4">
+            Select Video Source
+          </h2>
+          <div className="grid grid-cols-2 gap-4">
             <button
-              className={`px-4 py-2 rounded-lg transition ${
+              className={`py-3 px-4 rounded-xl transition ${
                 videoSource === "webcam"
                   ? "bg-blue-600 text-white"
                   : "bg-gray-200 text-black"
               }`}
-              onClick={() => setVideoSource("webcam")}
-            >
+              onClick={() => setVideoSource("webcam")}>
               Camera
             </button>
             <button
-              className={`px-4 py-2 rounded-lg transition ${
+              className={`py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200 ${
                 videoSource === "url"
                   ? "bg-blue-600 text-white"
                   : "bg-gray-200 text-black"
               }`}
-              onClick={() => setVideoSource("url")}
-            >
+              onClick={() => setVideoSource("url")}>
               URL
             </button>
           </div>
@@ -599,13 +600,13 @@ const ObjectDetection = () => {
               placeholder="Enter video URL"
               value={videoURL}
               onChange={(e) => setVideoURL(e.target.value)}
-              className="px-4 py-2 border rounded-lg w-full"
+              className="px-4 py-3 border rounded-xl w-full"
             />
           )}
         </div>
 
-        <div className="flex items-center gap-2 mb-4">
-          <label class="inline-flex items-center cursor-pointer">
+        <div className="w-full max-w-md flex items-center justify-center py-2">
+          <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
               value=""
@@ -625,79 +626,74 @@ const ObjectDetection = () => {
           disabled={!modelsLoaded}
           className={
             isWebcamStarted
-              ? "px-4 py-2 rounded-lg text-black hover:bg-blue-500 bg-[linear-gradient(to_right,theme(colors.indigo.400),theme(colors.indigo.100),theme(colors.sky.400),theme(colors.fuchsia.400),theme(colors.sky.400),theme(colors.indigo.100),theme(colors.indigo.400))] bg-[length:500%_auto] animate-gradient"
-              : "px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 transition disabled:opacity-50"
-          }
-        >
+              ? "py-3 px-4 rounded-xl text-black hover:bg-blue-500 bg-[linear-gradient(to_right,theme(colors.indigo.400),theme(colors.indigo.100),theme(colors.sky.400),theme(colors.fuchsia.400),theme(colors.sky.400),theme(colors.indigo.100),theme(colors.indigo.400))] bg-[length:500%_auto] animate-gradient"
+              : "py-3 px-4 bg-blue-600 rounded-xl hover:bg-blue-500 transition disabled:opacity-50"
+          }>
           {isWebcamStarted ? "Stop" : "Start"} SecureGuard
         </button>
-      </div>
 
-      <div className="relative">
-        {isWebcamStarted &&
-          (videoSource === "webcam" ? (
-            <video
-              ref={videoRef}
-              className="w-full h-full object-cover rounded-lg"
-              autoPlay
-              muted
-            />
-          ) : (
-            <video
-              ref={videoRef}
-              src={videoURL}
-              className="w-full h-full rounded-lg"
-              controls
-              autoPlay
-              crossOrigin="anonymous"
-            />
-          ))}
-
-        {/* Canvas for object detection */}
-
-        <canvas
-          ref={objectCanvasRef}
-          className="absolute top-0 left-0 w-full h-full"
-          style={{ pointerEvents: "none", zIndex: 2 }}
-        />
-        {/* Canvas for face detection */}
-        <canvas
-          ref={faceCanvasRef}
-          className="absolute top-0 left-0 w-full h-full"
-          style={{ pointerEvents: "none", zIndex: 3 }}
-        />
-
-        {/* Object detection labels (if any) */}
-        {predictions.length > 0 &&
-          predictions.map((prediction, index) => (
-            <div key={index}>
-              <p
-                className="absolute text-xs bg-orange-600 text-white px-2 py-1 rounded-lg"
-                style={{
-                  left: `${prediction.bbox[0]}px`,
-                  top: `${prediction.bbox[1]}px`,
-                  width: `${prediction.bbox[2]}px`,
-                  zIndex: 4,
-                }}
-              >
-                {`${prediction.class} - ${Math.round(
-                  prediction.score * 100
-                )}% confidence`}
-              </p>
-              <div
-                className="absolute border border-black rounded-lg"
-                style={{
-                  left: `${prediction.bbox[0]}px`,
-                  top: `${prediction.bbox[1]}px`,
-                  width: `${prediction.bbox[2]}px`,
-                  height: `${prediction.bbox[3]}px`,
-                  zIndex: 4,
-                }}
+        <div className="relative mt-4">
+          {isWebcamStarted &&
+            (videoSource === "webcam" ? (
+              <video
+                ref={videoRef}
+                className="w-full h-full object-cover rounded-xl"
+                autoPlay
+                muted
               />
-            </div>
-          ))}
+            ) : (
+              <video
+                ref={videoRef}
+                src={videoURL}
+                className="w-full h-full rounded-xl"
+                controls
+                autoPlay
+                crossOrigin="anonymous"
+              />
+            ))}
+
+          {/* Canvas for object detection */}
+          <canvas
+            ref={objectCanvasRef}
+            className="absolute top-0 left-0 w-full h-full"
+            style={{ pointerEvents: "none", zIndex: 2 }}
+          />
+          {/* Canvas for face detection */}
+          <canvas
+            ref={faceCanvasRef}
+            className="absolute top-0 left-0 w-full h-full"
+            style={{ pointerEvents: "none", zIndex: 3 }}
+          />
+
+          {/* Object detection labels (if any) */}
+          {predictions.length > 0 &&
+            predictions.map((prediction, index) => (
+              <div key={index}>
+                <p
+                  className="absolute text-xs bg-orange-600 text-white px-2 py-1 rounded-lg"
+                  style={{
+                    left: `${prediction.bbox[0]}px`,
+                    top: `${prediction.bbox[1]}px`,
+                    width: `${prediction.bbox[2]}px`,
+                    zIndex: 4,
+                  }}>
+                  {`${prediction.class} - ${Math.round(prediction.score * 100)}% confidence`}
+                </p>
+                <div
+                  className="absolute border border-black rounded-lg"
+                  style={{
+                    left: `${prediction.bbox[0]}px`,
+                    top: `${prediction.bbox[1]}px`,
+                    width: `${prediction.bbox[2]}px`,
+                    height: `${prediction.bbox[3]}px`,
+                    zIndex: 4,
+                  }}
+                />
+              </div>
+            ))}
+        </div>
       </div>
-    </div>
+    </Card>
   );
 };
 

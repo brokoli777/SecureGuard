@@ -41,8 +41,13 @@ const formFields = [
     validate: (value: string) =>
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? "" : "Invalid email format",
   },
-  { label: "Street Address", name: "streetAddress", type: "text" },
-  { label: "City", name: "city", type: "text" },
+  {
+    label: "Street Address",
+    name: "streetAddress",
+    type: "text",
+    required: false,
+  },
+  { label: "City", name: "city", type: "text", required: false },
 ];
 
 const initialFormData: FormData = {
@@ -232,6 +237,16 @@ export default function NewMemberForm() {
     loadModels();
   }, [modelsLoaded]);
 
+  const renderFieldLabel = (label: string, required: boolean) => (
+    <span>
+      {label}
+      {!required && (
+        <span className="text-gray-400 text-sm ml-1">(optional)</span>
+      )}
+      :
+    </span>
+  );
+
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl text-center font-bold mb-2">New Member Form</h1>
@@ -339,7 +354,9 @@ export default function NewMemberForm() {
         <div className="flex flex-col space-y-4">
           {formFields.map(({ label, name, type, required, maxLength }) => (
             <div key={name} className="flex gap-4">
-              <label className="w-1/3">{label}:</label>
+              <label className="w-1/3">
+                {renderFieldLabel(label, required ?? false)}
+              </label>
               <Input
                 type={type}
                 name={name}
@@ -352,7 +369,7 @@ export default function NewMemberForm() {
             </div>
           ))}
           <div className="flex gap-4">
-            <label className="w-1/3">Notes:</label>
+            <label className="w-1/3">{renderFieldLabel("Notes", false)}</label>
             <Textarea
               name="notes"
               value={formData.notes}
