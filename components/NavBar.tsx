@@ -1,5 +1,6 @@
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { hasEnvVars } from "@/utils/supabase/check-env-vars";
 import { EnvVarWarning } from "@/components/env-var-warning";
 import HeaderAuth from "@/components/header-auth"; // AuthButton separated
@@ -23,15 +24,22 @@ export default async function NavBar() {
 
   return (
     <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16 bg-background text-foreground">
-      <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
+      <div className="w-full max-w-5xl flex justify-between items-center px-9 text-sm">
         {/* Left side: Home and Dropdowns */}
         <div className="flex gap-5 items-center font-semibold">
-          <Link href="/">Home</Link>
-
+        <Link href="/" className="flex items-center">
+            <Image
+              src="/favicon.ico"
+              alt="Home"
+              width={24}
+              height={24}
+              className="rounded"
+            />
+          </Link>
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="hover:underline">
+                <NavigationMenuTrigger className="hover:underline font-bold">
                   Info
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
