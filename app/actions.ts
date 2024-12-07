@@ -133,3 +133,23 @@ export const signOutAction = async () => {
   await supabase.auth.signOut();
   return redirect("/sign-in");
 };
+
+
+export async function handleSignInWithGoogle(response: any) {
+  const supabase = createClient()
+  const { data, error } = await supabase.auth.signInWithIdToken({
+    provider: 'google',
+    token: response.credential,
+  })
+
+  if (error) {
+    console.error('Error logging in with Google', error)
+    return
+  }
+
+  if(data?.user) {
+    return redirect('/event-log')
+  }
+
+  return redirect('/intro')
+}
