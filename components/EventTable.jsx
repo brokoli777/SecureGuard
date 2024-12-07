@@ -78,15 +78,13 @@ export default function EventTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-24">ID</TableHead>
-              <TableHead className="w-24">Category</TableHead>
-              {!hideMemberColumn && (
-                <TableHead className="w-48">Member</TableHead>
-              )}
-              <TableHead className="w-48">Date</TableHead>
-              <TableHead className="w-48">Time</TableHead>
-              <TableHead className="w-24">Team ID</TableHead>
-              <TableHead className="w-24">Confidence</TableHead>
+              <TableHead>ID</TableHead>
+              <TableHead>Category</TableHead>
+              {!hideMemberColumn && <TableHead>Member</TableHead>}
+              <TableHead>Date</TableHead>
+              <TableHead>Time</TableHead>
+              <TableHead>Team ID</TableHead>
+              <TableHead>Confidence</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -103,10 +101,10 @@ export default function EventTable({
                 <TableCell>
                   {new Date(event.date_time).toLocaleTimeString()}
                 </TableCell>
-                <TableCell className="flex">
-                  <span className="truncate max-w-[100px]">
-                    {event.team_id}
-                  </span>
+                <TableCell>
+                  {event.team_id
+                    ? `${event.team_id.substring(0, 4)}...${event.team_id.slice(-4)}`
+                    : "N/A"}
                 </TableCell>
                 <TableCell>
                   {Number(event.object_confidence).toFixed(2)}
