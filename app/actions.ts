@@ -147,9 +147,18 @@ export async function handleSignInWithGoogle(response: any) {
     return
   }
 
-  if(data?.user) {
-    return redirect('/event-log')
+  if (data?.user?.created_at) {
+    const createdAt = new Date(data.user.created_at)
+    const currentDate = new Date()
+
+    // If the user was just created (logged in for the first time)
+    const isNewUser = createdAt === currentDate
+
+    if (isNewUser) {
+      console.log('New user logged in!')
+      return redirect('/intro')
+    } 
   }
 
-  return redirect('/intro')
+  return redirect('/event-log')
 }

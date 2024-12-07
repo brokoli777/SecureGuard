@@ -26,6 +26,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={GeistSans.className} suppressHydrationWarning>
+      {/* <Script
+        strategy="afterInteractive"
+        src="https://accounts.google.com/gsi/client"
+      /> */}
       <body className="bg-background text-foreground">
         <ThemeProvider
           attribute="class"
@@ -50,7 +54,6 @@ export default function RootLayout({
           </main>
         </ThemeProvider>
       </body>
-      <Script src="https://accounts.google.com/gsi/client" async></Script>
     </html>
   );
 }
