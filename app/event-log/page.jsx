@@ -56,7 +56,8 @@ export default function TestEventsPage() {
 
         const membersMap = {};
         membersData.forEach((member) => {
-          membersMap[member.member_id] = `${member.first_name} ${member.last_name}`;
+          membersMap[member.member_id] =
+            `${member.first_name} ${member.last_name}`;
         });
 
         setMembersMap(membersMap);
@@ -181,7 +182,10 @@ export default function TestEventsPage() {
   // Paginate filtered events
   const indexOfLastEvent = currentPage * itemsPerPage;
   const indexOfFirstEvent = indexOfLastEvent - itemsPerPage;
-  const currentEvents = eventsWithMemberNames.slice(indexOfFirstEvent, indexOfLastEvent);
+  const currentEvents = eventsWithMemberNames.slice(
+    indexOfFirstEvent,
+    indexOfLastEvent
+  );
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -200,7 +204,10 @@ export default function TestEventsPage() {
       <div className="p-4">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold">Event Logs</h1>
-          <PrintButtons filteredEvents={currentEvents} />
+          <PrintButtons
+            currentPageEvents={currentEvents}
+            allFilteredEvents={eventsWithMemberNames}
+          />
         </div>
 
         <div className="mb-6">
@@ -226,18 +233,16 @@ export default function TestEventsPage() {
         )}
 
         {/* Pagination Controls */}
-        <div className="flex justify-center mt-6">
-          <Button
-            disabled={currentPage === 1}
+        <div className="flex gap-4 items-center justify-center mt-4 py-4 border-t">
+          <Button variant="outline" disabled={currentPage === 1}>
             onClick={() => handlePageChange(currentPage - 1)}
-          >
             Previous
           </Button>
-          <span className="mx-4">Page {currentPage}</span>
+          <span className="text-sm">Page {currentPage}</span>
           <Button
+            variant="outline"
             disabled={currentPage * itemsPerPage >= filteredEvents.length}
-            onClick={() => handlePageChange(currentPage + 1)}
-          >
+            onClick={() => handlePageChange(currentPage + 1)}>
             Next
           </Button>
         </div>
