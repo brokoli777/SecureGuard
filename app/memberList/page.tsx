@@ -181,11 +181,12 @@ export default function MemberList() {
           variant="outline"
           onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
           disabled={currentPage === 1}>
-          Prev
+          Previous
         </Button>
         <div className="flex space-x-2 mx-4">
           {[...Array(totalPages)].map((_, i) => (
             <Button
+              className="pointer-events-none"
               key={i}
               variant={currentPage === i + 1 ? "default" : "outline"}
               onClick={() => setCurrentPage(i + 1)}>

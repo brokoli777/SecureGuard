@@ -229,14 +229,16 @@ export default function TestEventsPage() {
         />
       )}
       {/* Pagination Controls */}
-      <div className="flex gap-4 items-center justify-center mt-4 py-4 border-t">
+      <div className="flex gap-4 items-center justify-center mt-4">
         <Button
           variant="outline"
           disabled={currentPage === 1}
           onClick={() => handlePageChange(currentPage - 1)}>
           Previous
         </Button>
-        <span className="text-sm">Page {currentPage}</span>
+        <Button className="pointer-events-none">
+          <span className="text-sm"> {currentPage}</span>
+        </Button>
         <Button
           variant="outline"
           disabled={currentPage * itemsPerPage >= filteredEvents.length}

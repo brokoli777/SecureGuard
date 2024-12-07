@@ -27,7 +27,7 @@ export default async function NavBar() {
       <div className="w-full max-w-5xl flex justify-between items-center px-9 text-sm">
         {/* Left side: Home and Dropdowns */}
         <div className="flex gap-5 items-center font-semibold">
-        <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center">
             <Image
               src="/favicon.ico"
               alt="Home"
@@ -48,8 +48,7 @@ export default async function NavBar() {
                       <NavigationMenuLink asChild>
                         <Link
                           href="/about"
-                          className="block px-4 py-2 hover:bg-accent rounded"
-                        >
+                          className="block px-4 py-2 hover:bg-accent rounded">
                           About
                         </Link>
                       </NavigationMenuLink>
@@ -58,19 +57,17 @@ export default async function NavBar() {
                       <NavigationMenuLink asChild>
                         <Link
                           href="/contact"
-                          className="block px-4 py-2 hover:bg-accent rounded"
-                        >
+                          className="block px-4 py-2 hover:bg-accent rounded">
                           Contact
                         </Link>
                       </NavigationMenuLink>
                     </li>
-                    <hr/>
+                    <hr className="my-2" />
                     <li>
                       <NavigationMenuLink asChild>
                         <Link
                           href="/object-detection"
-                          className="block px-4 py-2 hover:bg-accent rounded"
-                        >
+                          className="block px-4 py-2 hover:bg-accent rounded">
                           Object Detection
                         </Link>
                       </NavigationMenuLink>
@@ -79,8 +76,7 @@ export default async function NavBar() {
                       <NavigationMenuLink asChild>
                         <Link
                           href="/facial-recognition"
-                          className="block px-4 py-2 hover:bg-accent rounded"
-                        >
+                          className="block px-4 py-2 hover:bg-accent rounded">
                           Facial Recognition
                         </Link>
                       </NavigationMenuLink>
@@ -114,8 +110,6 @@ export default async function NavBar() {
               <Link href="/editUser" className="hover:underline">
                 Edit Profile
               </Link>
-
-             
             </>
           )}
         </div>
