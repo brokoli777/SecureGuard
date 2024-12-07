@@ -56,7 +56,8 @@ export default function TestEventsPage() {
 
         const membersMap = {};
         membersData.forEach((member) => {
-          membersMap[member.member_id] = `${member.first_name} ${member.last_name}`;
+          membersMap[member.member_id] =
+            `${member.first_name} ${member.last_name}`;
         });
 
         setMembersMap(membersMap);
@@ -181,7 +182,10 @@ export default function TestEventsPage() {
   // Paginate filtered events
   const indexOfLastEvent = currentPage * itemsPerPage;
   const indexOfFirstEvent = indexOfLastEvent - itemsPerPage;
-  const currentEvents = eventsWithMemberNames.slice(indexOfFirstEvent, indexOfLastEvent);
+  const currentEvents = eventsWithMemberNames.slice(
+    indexOfFirstEvent,
+    indexOfLastEvent
+  );
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -196,51 +200,49 @@ export default function TestEventsPage() {
   }
 
   return (
-    <div>
-      <div className="p-4">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold">Event Logs</h1>
-          <PrintButtons filteredEvents={currentEvents} />
-        </div>
-
-        <div className="mb-6">
-          <EventLogDashboard
-            onSearch={handleSearch}
-            onDateFilter={handleDateFilter}
-            onCategoryFilter={handleCategoryFilter}
-            resetFilters={resetFilters}
-          />
-        </div>
-
-        {currentEvents.length === 0 ? (
-          <p>No events found for the current filter.</p>
-        ) : (
-          <EventTable
-            data={currentEvents}
-            hideMemberColumn={false}
-            filterDate={filterDate}
-            selectedMemberName={searchTerm}
-            membersMap={membersMap}
-            getRowClassName={getRowClassName}
-          />
-        )}
-
-        {/* Pagination Controls */}
-        <div className="flex justify-center mt-6">
-          <Button
-            disabled={currentPage === 1}
-            onClick={() => handlePageChange(currentPage - 1)}
-          >
-            Previous
-          </Button>
-          <span className="mx-4">Page {currentPage}</span>
-          <Button
-            disabled={currentPage * itemsPerPage >= filteredEvents.length}
-            onClick={() => handlePageChange(currentPage + 1)}
-          >
-            Next
-          </Button>
-        </div>
+    <div className="w-full max-w-5xl mx-auto p-4">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl font-bold">Event Logs</h1>
+        <PrintButtons
+          currentPageEvents={currentEvents}
+          allFilteredEvents={eventsWithMemberNames}
+        />
+      </div>
+      <div className="mb-6">
+        <EventLogDashboard
+          onSearch={handleSearch}
+          onDateFilter={handleDateFilter}
+          onCategoryFilter={handleCategoryFilter}
+          resetFilters={resetFilters}
+        />
+      </div>
+      {currentEvents.length === 0 ? (
+        <p>No events found for the current filter.</p>
+      ) : (
+        <EventTable
+          data={currentEvents}
+          hideMemberColumn={false}
+          filterDate={filterDate}
+          selectedMemberName={searchTerm}
+          membersMap={membersMap}
+          getRowClassName={getRowClassName}
+        />
+      )}
+      {/* Pagination Controls */}
+      <div className="flex gap-4 items-center justify-center mt-4 py-4 border-t">
+        <Button
+          variant="outline"
+          disabled={currentPage === 1}
+          onClick={() => handlePageChange(currentPage - 1)}>
+          Previous
+        </Button>
+        <span className="text-sm">Page {currentPage}</span>
+        <Button
+          variant="outline"
+          disabled={currentPage * itemsPerPage >= filteredEvents.length}
+          onClick={() => handlePageChange(currentPage + 1)}>
+          Next
+        </Button>
       </div>
     </div>
   );

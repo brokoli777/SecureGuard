@@ -1,5 +1,10 @@
 // Converts event data to CSV format
 export const convertToCSV = (data) => {
+  if (!Array.isArray(data) || data.length === 0) {
+    console.error("No data provided for CSV conversion");
+    return "";
+  }
+
   const headers = [
     "Event ID",
     "Category",
@@ -10,54 +15,82 @@ export const convertToCSV = (data) => {
     "Object Confidence",
   ];
 
-  const formatRow = (event) => [
-    event.event_id,
-    event.category,
-    new Date(event.date_time).toLocaleDateString(),
-    new Date(event.date_time).toLocaleTimeString(),
-    event.team_id,
-    event.member_name || "N/A",
-    event.object_confidence,
-  ];
+  const formatRow = (event) => {
+    try {
+      const date = new Date(event.date_time);
+      return [
+        event.event_id,
+        event.category,
+        date.toLocaleDateString(),
+        date.toLocaleTimeString(),
+        event.team_id,
+        event.member_name || "N/A",
+        event.object_confidence,
+      ];
+    } catch (error) {
+      console.error("Error formatting row:", error);
+      return Array(headers.length).fill("N/A");
+    }
+  };
 
   return [headers, ...data.map(formatRow)]
-    .map((row) => row.join(","))
+    .map((row) =>
+      row
+        .map((cell) => {
+          if (cell === null || cell === undefined) return "";
+          return `"${String(cell).replace(/"/g, '""')}"`;
+        })
+        .join(",")
+    )
     .join("\n");
 };
 
 // Handles printing event table with custom styling
 export const printEventTable = (data, currentPageOnly = false) => {
-  const printWindow = window.open("", "_blank");
-
-  // Get data to print
-  let contentToPrint = data;
-  if (currentPageOnly) {
-    // Get all visible IDs from the current page
-    const visibleIds = [];
-    document.querySelectorAll("table tbody tr").forEach((row) => {
-      const idCell = row.cells[0];
-      if (idCell) {
-        visibleIds.push(idCell.textContent.trim());
-      }
-    });
-
-    // Filter the data to only include visible rows
-    contentToPrint = data.filter((event) =>
-      visibleIds.includes(String(event.event_id))
-    );
+  if (!Array.isArray(data) || data.length === 0) {
+    alert("No data available to print");
+    return;
   }
 
-  const formatTableRow = (event) => `
-    <tr>
-      <td>${event.event_id}</td>
-      <td>${event.category}</td>
-      <td>${new Date(event.date_time).toLocaleDateString()}</td>
-      <td>${new Date(event.date_time).toLocaleTimeString()}</td>
-      <td>${event.team_id}</td>
-      <td>${event.member_name || "N/A"}</td>
-      <td>${event.object_confidence}</td>
-    </tr>
-  `;
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) {
+    alert("Please allow pop-ups to print the event log");
+    return;
+  }
+
+  const formatTableRow = (event) => {
+    try {
+      const date = new Date(event.date_time);
+      const category = event.category?.toLowerCase() || "";
+      let rowClass = "";
+
+      // Add highlighting classes based on category
+      if (category === "person" && event.member_name === "Unrecognized") {
+        rowClass = "highlight-amber";
+      } else if (category === "gun") {
+        rowClass = "highlight-red";
+      } else if (category === "fire") {
+        rowClass = "highlight-orange";
+      }
+
+      const shortenId = (id) =>
+        id ? `${id.substring(0, 4)}...${id.slice(-4)}` : "N/A";
+      return `
+        <tr class="${rowClass}">
+          <td>${event.event_id || "N/A"}</td>
+          <td>${event.category || "N/A"}</td>
+          <td>${date.toLocaleDateString()}</td>
+          <td>${date.toLocaleTimeString()}</td>
+          <td>${shortenId(event.team_id)}</td>
+          <td>${event.member_name || "N/A"}</td>
+          <td>${event.object_confidence || "N/A"}</td>
+        </tr>
+      `;
+    } catch (error) {
+      console.error("Error formatting table row:", error);
+      return "";
+    }
+  };
 
   const currentDateTime = {
     date: new Date().toLocaleDateString(),
@@ -65,9 +98,11 @@ export const printEventTable = (data, currentPageOnly = false) => {
   };
 
   printWindow.document.write(`
+    <!DOCTYPE html>
     <html>
       <head>
         <title>Event Log Print</title>
+        <meta charset="UTF-8">
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
           
@@ -119,11 +154,13 @@ export const printEventTable = (data, currentPageOnly = false) => {
           }
 
           tr:nth-child(even) { background-color: #f9fafb; }
-          tr:hover { background-color: #f5f5f5; }
+          
+          .highlight-amber { background-color: #fcd34d !important; }
+          .highlight-red { background-color: #ef4444 !important; color: white; }
+          .highlight-orange { background-color: #f97316 !important; color: white; }
 
           @media print {
             body { padding: 20px; }
-            button { display: none; }
             .header { margin-bottom: 20px; }
             table { page-break-inside: auto; }
             tr { 
@@ -131,11 +168,17 @@ export const printEventTable = (data, currentPageOnly = false) => {
               page-break-after: auto;
             }
             thead { display: table-header-group; }
+            .highlight-amber,
+            .highlight-red,
+            .highlight-orange {
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
           }
 
           @page {
             margin: 1cm;
-            size: A4;
+            size: A4 portrait;
           }
         </style>
       </head>
@@ -145,7 +188,7 @@ export const printEventTable = (data, currentPageOnly = false) => {
           <div class="metadata">
             Generated on: ${currentDateTime.date} at ${currentDateTime.time}
             <br>
-            ${currentPageOnly ? "Current Page Events" : "All Events"}: ${contentToPrint.length}
+            ${currentPageOnly ? "Current Page Events" : "All Events"}: ${data.length}
           </div>
         </div>
         <table>
@@ -161,7 +204,7 @@ export const printEventTable = (data, currentPageOnly = false) => {
             </tr>
           </thead>
           <tbody>
-            ${contentToPrint.map(formatTableRow).join("")}
+            ${data.map(formatTableRow).join("")}
           </tbody>
         </table>
         <div class="metadata" style="margin-top: 20px; font-size: 12px; color: #666;">
@@ -172,23 +215,31 @@ export const printEventTable = (data, currentPageOnly = false) => {
   `);
 
   printWindow.document.close();
-  setTimeout(() => printWindow.print(), 150);
+  setTimeout(() => printWindow.print(), 500);
 };
 
 // Exports data to CSV file
 export const exportToCSV = (data) => {
-  const blob = new Blob([convertToCSV(data)], { type: "text/csv" });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  const fileName = `event-log-${new Date().toISOString().split("T")[0]}.csv`;
+  if (!Array.isArray(data) || data.length === 0) {
+    alert("No data available to export");
+    return;
+  }
 
-  Object.assign(a, {
-    href: url,
-    download: fileName,
-  });
+  try {
+    const csvContent = convertToCSV(data);
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const fileName = `event-log-${new Date().toISOString().split("T")[0]}.csv`;
 
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Error exporting CSV:", error);
+    alert("Error exporting CSV file. Please try again.");
+  }
 };
