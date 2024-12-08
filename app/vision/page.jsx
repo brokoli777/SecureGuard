@@ -561,8 +561,8 @@ const ObjectDetection = () => {
   }, [isWebcamStarted, modelsLoaded]);
 
   return (
-    <Card className="w-auto p-8 mx-auto">
-      <div className="w-full flex flex-col items-center justify-center space-y-8 px-8">
+    <Card className="w-auto p-2 my-auto">
+      <div className="w-full flex flex-col items-center justify-center space-y-6 px-8">
         {!modelsLoaded && (
           <div className="text-center">
             <p className="p-2">Loading models...</p>
@@ -615,7 +615,7 @@ const ObjectDetection = () => {
               onChange={() => setHaarToggle(!haarToggle)}
             />
             <div class="relative w-11 h-6 bg-gray-200  rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">
+            <span class="ms-3 text-md font-medium text-gray-900 dark:text-gray-300">
               Detect Fire and Guns
             </span>
           </label>
@@ -627,7 +627,7 @@ const ObjectDetection = () => {
           className={
             isWebcamStarted
               ? "py-3 px-4 rounded-xl text-black hover:bg-blue-500 bg-[linear-gradient(to_right,theme(colors.indigo.400),theme(colors.indigo.100),theme(colors.sky.400),theme(colors.fuchsia.400),theme(colors.sky.400),theme(colors.indigo.100),theme(colors.indigo.400))] bg-[length:500%_auto] animate-gradient"
-              : "py-3 px-4 bg-blue-600 rounded-xl hover:bg-blue-500 transition disabled:opacity-50"
+              : "py-3 px-4 bg-blue-600 text-white rounded-xl hover:bg-blue-500 transition disabled:opacity-50"
           }>
           {isWebcamStarted ? "Stop" : "Start"} SecureGuard
         </button>
