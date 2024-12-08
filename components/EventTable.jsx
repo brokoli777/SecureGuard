@@ -39,13 +39,6 @@ export default function EventTable({
 
     if (filterDate) {
       const filterDateObj = new Date(filterDate);
-      filtered = filtered.filter((event) => {
-        const eventDate = new Date(event.date_time);
-        // Compare only the date parts (YYYY-MM-DD)
-        const eventDateString = eventDate.toISOString().split("T")[0]; // YYYY-MM-DD
-        const filterDateString = filterDateObj.toISOString().split("T")[0]; // YYYY-MM-DD
-        return eventDateString === filterDateString;
-      });
     }
 
     return filtered;
@@ -57,7 +50,7 @@ export default function EventTable({
   // Calculate the index range for the current page
   const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
   const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
-  const currentData = filteredData.slice(indexOfFirstItem, indexOfLastItem);
+  const currentData = data.slice(indexOfFirstItem, indexOfLastItem);
 
   // Handle page changes
   const handleNextPage = () => {
