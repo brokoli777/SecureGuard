@@ -27,14 +27,12 @@ export const signUpAction = async (formData: FormData) => {
     console.error(error.code + " " + error.message);
     return encodedRedirect("error", "/sign-up", error.message);
   } else {
-    // return encodedRedirect(
-    //   "success",
-    //   "/sign-up",
-    //   "Thanks for signing up! Please check your email for a verification link.",
-    // );
-    // return redirect("/protected");
-    //Go to event logs page with signup success message
-    return redirect("/intro");
+    return encodedRedirect(
+      "success",
+      "/sign-up",
+      "Thanks for signing up! Please check your email for a verification link.",
+    );
+    // return redirect("/intro");
   }
 };
 
@@ -52,7 +50,6 @@ export const signInAction = async (formData: FormData) => {
     return encodedRedirect("error", "/sign-in", error.message);
   }
 
-  // return redirect("/protected");
   //Go to event logs page with login success message
   return redirect("/event-log");
 };
