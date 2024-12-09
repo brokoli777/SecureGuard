@@ -1,11 +1,23 @@
 # SecureGuard
 
-An Image Recognition Security System
+A Real-Time Image Recognition and Security System
 
 ## Features
 
-- Can detect people and objects for security logs.
-- Can register members to be recognized and inform when unknown people are detected..
+- **Live Feed Analysis**: Utilizes any webcam to perform real-time object and facial detection.
+- **Security Monitoring**: Detects and logs individuals and objects for security and tracking purposes.
+- **Member Registration**: Allows uploading member images for recognition, enabling the system to identify registered individuals and highlight unrecognized individuals.
+- **Easy Sign-Up**: Quickly sign up using your email or Google account for access. 
+
+## Access Credentials for Test Account
+
+To access the application without creating an account, use the following test credentials:
+
+Username: 
+
+Password: 
+
+Access the application here: https://secure-guard-three.vercel.app
 
 ## Setup
 
@@ -30,8 +42,11 @@ npm run dev
 
 The application is also hosted online on vercel at https://secure-guard-three.vercel.app
 
-### Deviations from PRJ566
-- Instead of creating two separate server and client applications which would be difficult for the user to setup, we opted to create a node.js based full stack application that can be accessed from the web or run locally. This means user can use the the published website without downloading any python files as we are using javascript version of python libraries in the application.
+## Deviations from PRJ566
+- **Unified Application**: Instead of separate server and client applications, a Node.js-based full-stack application was created for ease of setup and use. This allows users to access the published website without needing to download or run Python files, as the application uses JavaScript-based equivalents of Python libraries.
 
-- Some of the UI has been improved from PRJ566 design to make it easier for the user to navigate.
-- Additional routes were created for testing without sign in.
+- **UI Improvements**: The UI has been enhanced from the PRJ566 design to improve user navigation and experience.
+
+- **Sign-Up**: Added support for quick registration via Google acccount. 
+
+- **Testing Routes**: Additional routes were created for testing without sign in.
