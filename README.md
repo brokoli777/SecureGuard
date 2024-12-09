@@ -50,3 +50,6 @@ The application is also hosted online on vercel at https://secure-guard-three.ve
 - **Sign-Up**: Added support for quick registration via Google acccount. 
 
 - **Testing Routes**: Additional routes were created for testing without sign in.
+
+## Documentation
+- [Software Requirements Specification (SRS) - PDF](SRS_SecureGuard.pdf)
