@@ -56,4 +56,5 @@ The application is also hosted online on vercel at https://secure-guard-three.ve
 ## Documentation
 - [Software Requirements Specification (SRS) - PDF](SRS_SecureGuard.pdf)
 
-- https://seneca.sharepoint.com/sites/2024-09-03PRJ666NBB-Team04/_layouts/15/stream.aspx?id=%2Fsites%2F2024%2D09%2D03PRJ666NBB%2DTeam04%2FShared%20Documents%2FTeam%2004%2FSECUREGUARD%2Emp4&referrer=StreamWebApp%2EWeb&referrerScenario=AddressBarCopied%2Eview%2Ef2027c58%2D73b6%2D4986%2Da526%2D0ad04d2189ae&ga=1
+## Video Presentation
+- [Click to view video presentation](https://seneca.sharepoint.com/sites/2024-09-03PRJ666NBB-Team04/_layouts/15/stream.aspx?id=%2Fsites%2F2024%2D09%2D03PRJ666NBB%2DTeam04%2FShared%20Documents%2FTeam%2004%2FSECUREGUARD%2Emp4&referrer=StreamWebApp%2EWeb&referrerScenario=AddressBarCopied%2Eview%2Ef2027c58%2D73b6%2D4986%2Da526%2D0ad04d2189ae&ga=1)
