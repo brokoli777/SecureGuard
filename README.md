@@ -13,11 +13,11 @@ A Real-Time Image Recognition and Security System
 
 To access the application without creating an account, use the following test credentials:
 
-Username: 
+**Username:** `bregwinpaul@gmail.com`
 
-Password: 
+**Password:** `testing123`
 
-Access the application here: https://secure-guard-three.vercel.app
+Access the application [here](https://secure-guard-three.vercel.app).
 
 ## Setup
 
